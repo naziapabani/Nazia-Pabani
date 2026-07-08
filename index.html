@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UC Food Tracker - Ulcerative Colitis Friendly</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>🍃 UC Food Tracker</h1>
+            <p class="subtitle">Ulcerative Colitis & Ayurveda-Informed Nutrition</p>
+        </header>
+
+        <section class="goals-section">
+            <h2>Daily Goals (5'2", 150lb - Fat Loss)</h2>
+            <div class="goals-grid">
+                <div class="goal-card calories">
+                    <span class="goal-label">Calories</span>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="calories-progress"></div>
+                    </div>
+                    <span class="goal-value"><span id="calories-current">0</span> / 1400</span>
+                </div>
+                <div class="goal-card protein">
+                    <span class="goal-label">Protein (g)</span>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="protein-progress"></div>
+                    </div>
+                    <span class="goal-value"><span id="protein-current">0</span> / 120</span>
+                </div>
+                <div class="goal-card anti-inflammatory">
+                    <span class="goal-label">Anti-Inflammatory Foods</span>
+                    <span class="goal-value" id="anti-inflammatory-count">0</span>
+                </div>
+                <div class="goal-card uc-safe">
+                    <span class="goal-label">UC-Safe Foods</span>
+                    <span class="goal-value" id="uc-safe-count">0</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="add-food-section">
+            <h2>Add Food</h2>
+            <div class="search-container">
+                <input type="text" id="food-search" placeholder="Search foods..." autocomplete="off">
+                <div id="search-results" class="search-results"></div>
+            </div>
+
+            <div class="custom-food-toggle">
+                <button id="toggle-custom-food">+ Add Custom Food</button>
+            </div>
+
+            <div id="custom-food-form" class="custom-food-form hidden">
+                <h3>Custom Food Entry</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="custom-name">Food Name</label>
+                        <input type="text" id="custom-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-calories">Calories</label>
+                        <input type="number" id="custom-calories" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-protein">Protein (g)</label>
+                        <input type="number" id="custom-protein" min="0" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-anti-inflammatory">Anti-Inflammatory?</label>
+                        <select id="custom-anti-inflammatory">
+                            <option value="yes">Yes</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="no">No (Inflammatory)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-uc-safe">UC-Safe?</label>
+                        <select id="custom-uc-safe">
+                            <option value="safe">Safe</option>
+                            <option value="caution">Use Caution</option>
+                            <option value="avoid">Avoid During Flare</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-ayurveda">Ayurveda (Dosha)</label>
+                        <select id="custom-ayurveda">
+                            <option value="pitta-pacifying">Pitta-Pacifying (Best for UC)</option>
+                            <option value="vata-pacifying">Vata-Pacifying</option>
+                            <option value="kapha-pacifying">Kapha-Pacifying</option>
+                            <option value="tridoshic">Tridoshic (Balanced)</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="add-custom-food" class="btn-primary">Add Food</button>
+            </div>
+        </section>
+
+        <section class="food-log-section">
+            <h2>Today's Food Log</h2>
+            <div id="food-log" class="food-log">
+                <p class="empty-log">No foods logged yet. Start by searching above!</p>
+            </div>
+        </section>
+
+        <section class="info-section">
+            <h2>UC & Ayurveda Guide</h2>
+
+            <div class="info-tabs">
+                <button class="tab-btn active" data-tab="uc-tips">UC Tips</button>
+                <button class="tab-btn" data-tab="ayurveda">Ayurveda</button>
+                <button class="tab-btn" data-tab="foods-avoid">Foods to Avoid</button>
+                <button class="tab-btn" data-tab="foods-embrace">Foods to Embrace</button>
+            </div>
+
+            <div class="tab-content active" id="uc-tips">
+                <h3>Managing UC Through Diet</h3>
+                <ul>
+                    <li><strong>Eat smaller, frequent meals</strong> - Easier on digestion</li>
+                    <li><strong>Stay hydrated</strong> - Aim for 8+ glasses of water daily</li>
+                    <li><strong>Cook vegetables well</strong> - Raw can irritate during flares</li>
+                    <li><strong>Keep a food diary</strong> - Track triggers specific to you</li>
+                    <li><strong>Low-residue during flares</strong> - Reduce fiber temporarily</li>
+                    <li><strong>Omega-3 fatty acids</strong> - Anti-inflammatory benefits</li>
+                </ul>
+            </div>
+
+            <div class="tab-content" id="ayurveda">
+                <h3>Ayurveda & Ulcerative Colitis</h3>
+                <p>In Ayurveda, UC is often associated with aggravated <strong>Pitta dosha</strong> (fire element). The goal is to pacify Pitta through cooling, soothing foods.</p>
+                <h4>Pitta-Pacifying Principles:</h4>
+                <ul>
+                    <li><strong>Favor cooling foods</strong> - Cucumber, coconut, mint, coriander</li>
+                    <li><strong>Sweet, bitter, astringent tastes</strong> - These calm Pitta</li>
+                    <li><strong>Avoid spicy, sour, salty</strong> - These aggravate Pitta</li>
+                    <li><strong>Ghee (clarified butter)</strong> - Healing for gut lining</li>
+                    <li><strong>Aloe vera juice</strong> - Cooling and healing</li>
+                    <li><strong>Turmeric with ghee</strong> - Anti-inflammatory</li>
+                    <li><strong>Eat at regular times</strong> - Pitta thrives on routine</li>
+                </ul>
+            </div>
+
+            <div class="tab-content" id="foods-avoid">
+                <h3>Foods to Limit or Avoid</h3>
+                <div class="food-category">
+                    <h4>🚫 High Risk During Flares</h4>
+                    <ul>
+                        <li>Raw vegetables & salads</li>
+                        <li>Nuts and seeds (whole)</li>
+                        <li>Spicy foods (chili, hot sauce)</li>
+                        <li>Dairy (except ghee & yogurt for some)</li>
+                        <li>Caffeine & alcohol</li>
+                        <li>Fried & fatty foods</li>
+                        <li>High-fiber grains</li>
+                    </ul>
+                </div>
+                <div class="food-category">
+                    <h4>⚠️ Common Triggers</h4>
+                    <ul>
+                        <li>Gluten (for some)</li>
+                        <li>Corn & popcorn</li>
+                        <li>Beans & legumes</li>
+                        <li>Cruciferous vegetables (broccoli, cabbage)</li>
+                        <li>Citrus fruits</li>
+                        <li>Artificial sweeteners</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tab-content" id="foods-embrace">
+                <h3>UC-Friendly Foods</h3>
+                <div class="food-category">
+                    <h4>✅ Generally Safe</h4>
+                    <ul>
+                        <li>White rice & rice porridge</li>
+                        <li>Cooked carrots, squash, zucchini</li>
+                        <li>Bananas (ripe)</li>
+                        <li>Lean proteins (chicken, fish, eggs)</li>
+                        <li>Bone broth</li>
+                        <li>Ghee</li>
+                        <li>Oatmeal (well-cooked)</li>
+                    </ul>
+                </div>
+                <div class="food-category">
+                    <h4>🌿 Anti-Inflammatory Stars</h4>
+                    <ul>
+                        <li>Salmon & fatty fish (omega-3)</li>
+                        <li>Turmeric (with black pepper)</li>
+                        <li>Ginger (cooked)</li>
+                        <li>Olive oil</li>
+                        <li>Avocado (ripe)</li>
+                        <li>Blueberries</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>⚠️ This tracker is for informational purposes only. Always consult your gastroenterologist and healthcare team for personalized dietary advice.</p>
+        </footer>
+    </div>
+
+    <script src="food-database.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
