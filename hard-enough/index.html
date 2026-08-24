@@ -1,0 +1,1913 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hard Enough</title>
+<meta name="description" content="75 Hard scaled down — your rules, your nutrition plan, rest days, and a training log.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hard Enough">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#171F2D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style id="app-css">
+*,*::before,*::after{box-sizing:border-box}
+html,body,div,span,h1,h2,h3,h4,p,ul,ol,li,button,input,select,textarea,label,section,header,footer,nav,main{margin:0;padding:0;border:0;font:inherit;color:inherit}
+ul,ol{list-style:none}
+button{background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input,select,textarea{background:none;font-family:inherit}
+
+/* ============================================================
+   Niarox system, sampled from the rate proposal:
+     ground #171F2D · panel #1F2D45 · rule #516889 · accent #82A3CC
+   Deliberately single-theme — the brand has no light mode, so every
+   colour is painted explicitly and nothing is left to the host.
+   Status hues were run through the CVD validator; the original violet
+   collided with the brand cornflower (ΔE 12.5 normal vision) and was
+   replaced with gold. "Partial" sits on the mint ramp rather than
+   owning a hue, because partial is progress toward complete.
+   ============================================================ */
+:root{
+  color-scheme:dark;
+
+  --ground:#171F2D;
+  --ground-2:#121926;
+  --panel:#1F2D45;
+  --panel-2:#26374F;
+  --rule:#516889;
+  --rule-soft:#324055;
+
+  --ink:#FFFFFF;
+  --ink-2:#C5D2E3;
+  --ink-3:#7D90AB;
+
+  --brand:#82A3CC;
+  --brand-deep:#4E6C96;
+  --brand-soft:rgba(130,163,204,.16);
+  --on-brand:#171F2D;
+
+  --go:#4BE3AE;
+  --go-soft:rgba(75,227,174,.15);
+  --go-dim:#2A8C6C;
+  --on-go:#0E1B18;
+
+  --bonus:#FFCC4D;
+  --bonus-soft:rgba(255,204,77,.15);
+
+  --rest:#82A3CC;
+  --rest-soft:rgba(130,163,204,.15);
+
+  --miss:#FF6F61;
+  --miss-soft:rgba(255,111,97,.15);
+
+  --track:rgba(130,163,204,.20);
+
+  --r-lg:4px;
+  --r-md:3px;
+  --r-sm:2px;
+
+  --display:"Anton","Haettenschweiler","Arial Narrow",sans-serif;
+  --body:"Outfit",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+
+body{
+  font-family:var(--body);
+  background:var(--ground);
+  color:var(--ink);
+  font-size:14.5px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.045;mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+.app{
+  max-width:472px;margin:0 auto;
+  padding:0 18px calc(118px + env(safe-area-inset-bottom));
+  padding-top:env(safe-area-inset-top);
+}
+
+/* ---------------- primitives ---------------- */
+.eyebrow{
+  font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--brand);
+}
+.eyebrow.mute{color:var(--ink-3)}
+.h-sec{
+  font-family:var(--body);font-weight:800;font-size:25px;line-height:1.06;letter-spacing:-.02em;
+  text-transform:uppercase;color:var(--brand);margin-top:5px;text-wrap:balance;
+}
+/* the proposal's filled label pill */
+.pill-label{
+  display:inline-block;background:var(--brand);color:var(--on-brand);
+  font-weight:700;font-size:12px;letter-spacing:-.005em;padding:6px 14px;border-radius:999px;
+}
+.panel{background:var(--panel);border:1px solid var(--rule)}
+.rule{height:1px;background:var(--rule-soft);margin-top:26px}
+.stack{display:flex;flex-direction:column}
+
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rise{animation:rise .4s cubic-bezier(.22,.9,.3,1) backwards;animation-delay:calc(var(--i,0) * 38ms)}
+
+/* ---------------- top bar ---------------- */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 0 12px;position:sticky;top:0;z-index:40;
+  background:linear-gradient(var(--ground) 70%,transparent);
+}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand-mark{
+  width:22px;height:22px;flex-shrink:0;background:var(--brand);color:var(--on-brand);
+  font-family:var(--display);font-size:15px;line-height:23px;text-align:center;
+}
+.brand-name{font-family:var(--display);font-size:16px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.chip{
+  font-family:var(--mono);font-size:8.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+  padding:5px 8px;border:1px solid var(--rule);color:var(--ink-3);background:var(--panel);white-space:nowrap;
+  transition:color .25s,border-color .25s,background .25s;
+}
+.chip[data-state="pending"],.chip[data-state="saving"]{color:var(--bonus);border-color:var(--bonus)}
+.chip[data-state="saved"]{color:var(--go);border-color:var(--go)}
+.chip[data-state="readonly"],.chip[data-state="error"]{color:var(--miss);border-color:var(--miss)}
+.icon-btn{
+  width:34px;height:34px;display:grid;place-items:center;
+  border:1px solid var(--rule);color:var(--ink-2);background:var(--panel);transition:color .18s,border-color .18s;
+}
+.icon-btn:hover{color:var(--ink);border-color:var(--brand)}
+.icon-btn svg{width:16px;height:16px;display:block}
+
+/* ---------------- hero ---------------- */
+.hero{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--rule);padding:16px 18px 0}
+/* the proposal's oversized edge wordmark — a cover-page move, so it lives
+   on the gate where it can bleed off the edge the way the PDF does */
+.gate-mark{
+  position:absolute;right:-26px;top:0;bottom:0;display:flex;align-items:center;
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:var(--display);font-size:132px;line-height:1;letter-spacing:.01em;
+  color:var(--brand);opacity:.15;white-space:nowrap;pointer-events:none;z-index:0;
+}
+.gate > *:not(.gate-mark){position:relative;z-index:1}
+.hero-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;position:relative}
+.hero-num{display:flex;align-items:baseline;gap:9px;margin-top:4px}
+.daynum{font-family:var(--display);font-size:100px;line-height:.78;color:var(--ink);transition:color .35s;font-variant-numeric:tabular-nums}
+.hero.is-done .daynum{color:var(--go)}
+.hero.is-rest .daynum{color:var(--rest)}
+.hero.is-over .daynum{color:var(--ink-3)}
+.day-of{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-3)}
+.hero-date{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink-2);letter-spacing:.12em;text-transform:uppercase;text-align:right;white-space:nowrap}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;margin-top:7px;
+  font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  padding:4px 9px;white-space:nowrap;border:1px solid currentColor;
+}
+.pill.go{color:var(--go)}
+.pill.part{color:var(--bonus)}
+.pill.rest{color:var(--rest)}
+.pill.flat{color:var(--ink-3)}
+
+.chain-wrap{margin:18px -18px 0;padding:12px 18px 13px;border-top:1px solid var(--rule);background:var(--ground-2)}
+.chain{display:flex;gap:2px;align-items:flex-end;height:30px}
+.tick{flex:1 1 0;min-width:0;border-radius:1px 1px 0 0;background:var(--track);height:7px;transition:height .3s cubic-bezier(.22,.9,.3,1),background .3s}
+.tick.part{background:var(--go-dim);height:17px}
+.tick.miss{background:var(--miss);height:7px}
+.tick.rest{background:var(--rest);height:12px}
+.tick.done{background:var(--go);height:30px}
+.tick.today{background:var(--ink);height:30px}
+.tick.today.done{background:var(--go)}
+.tick.today.rest{background:var(--rest);height:30px}
+.chain-legend{display:flex;justify-content:space-between;gap:8px;margin-top:8px}
+
+/* ---------------- KPI tiles (straight from the proposal) ---------------- */
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule);margin-top:12px;background:var(--panel)}
+.kpi.three{grid-template-columns:repeat(3,1fr)}
+.k{padding:12px 9px;border-left:1px solid var(--rule-soft);min-width:0}
+.k:first-child{border-left:0}
+.kn{font-family:var(--body);font-weight:800;font-size:22px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kd{font-family:var(--mono);font-size:10px;color:var(--brand);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kl{font-family:var(--mono);font-size:8px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k.go .kn{color:var(--go)}
+.k.bonus .kn{color:var(--bonus)}
+.k.rest .kn{color:var(--rest)}
+.k.miss .kn{color:var(--miss)}
+
+/* ---------------- tasks ---------------- */
+.group-label{
+  display:flex;align-items:center;gap:10px;margin:22px 0 9px;
+  font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
+}
+.group-label::after{content:"";flex:1;height:1px;background:var(--rule-soft)}
+.group-label .n{color:var(--brand);font-weight:700}
+.tasks{display:flex;flex-direction:column;gap:7px}
+.task{
+  display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;
+  background:var(--panel);border:1px solid var(--rule);padding:13px 14px;
+  transition:border-color .18s,background .18s,transform .09s;
+}
+.task:active{transform:scale(.987)}
+.task.on{border-color:var(--go);background:var(--go-soft)}
+.task.bonus.on{border-color:var(--bonus);background:var(--bonus-soft)}
+.task[disabled]{opacity:.5;cursor:default}
+.task[disabled]:active{transform:none}
+.box{
+  flex-shrink:0;width:24px;height:24px;margin-top:1px;border:1.5px solid var(--rule);
+  display:grid;place-items:center;transition:border-color .2s,background .2s;
+}
+.task.on .box{background:var(--go);border-color:var(--go)}
+.task.bonus.on .box{background:var(--bonus);border-color:var(--bonus)}
+.box svg{width:13px;height:13px;color:var(--on-go);opacity:0;transform:scale(.5);transition:opacity .16s,transform .3s cubic-bezier(.18,1.6,.35,1)}
+.task.bonus.on .box svg{color:var(--on-brand)}
+.task.on .box svg{opacity:1;transform:none}
+.task.pop .box{animation:thump .32s cubic-bezier(.22,.9,.3,1)}
+@keyframes thump{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
+.task-body{min-width:0;flex:1}
+.task-label{font-weight:600;font-size:14.5px;line-height:1.3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.task.on .task-label{color:var(--go)}
+.task.bonus.on .task-label{color:var(--bonus)}
+.task-detail{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.45}
+.task-detail.plan{color:var(--brand);font-weight:500}
+.tag{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--bonus);border:1px solid var(--bonus);padding:1px 5px}
+.tag.auto{color:var(--brand);border-color:var(--brand-deep)}
+
+.note{margin-top:11px;padding:12px 14px;font-size:12.5px;line-height:1.5;border:1px solid var(--rule-soft);color:var(--ink-2);background:var(--panel)}
+.note.alert{border-color:var(--miss);color:var(--miss)}
+.note.calm{border-color:var(--brand-deep);color:var(--brand)}
+.note b{font-weight:700;color:var(--ink)}
+.note.alert b,.note.calm b{color:inherit}
+
+/* ---------------- training ---------------- */
+.wo-row{
+  display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--panel);
+  border:1px solid var(--rule-soft);margin-top:7px;
+}
+.wo-row:nth-child(even){background:var(--panel-2)}
+.wo-type{
+  font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brand);border:1px solid var(--brand-deep);padding:3px 7px;flex-shrink:0;
+}
+.wo-main{flex:1;min-width:0;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.wo-sub{display:block;font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:3px}
+
+/* minutes-per-day bars: one series, so no legend — the title names it */
+.chart{margin-top:10px;background:var(--panel);border:1px solid var(--rule);padding:13px 13px 10px}
+.chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.chart-title{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.chart-read{font-family:var(--mono);font-size:10.5px;color:var(--brand);font-variant-numeric:tabular-nums;white-space:nowrap}
+.plot{position:relative;height:82px;display:flex;align-items:flex-end;gap:2px}
+.plot-target{position:absolute;left:0;right:0;border-top:1px dashed var(--brand-deep);pointer-events:none}
+.plot-target span{position:absolute;left:0;top:-13px;background:var(--panel);padding:0 5px 0 0;font-family:var(--mono);font-size:8.5px;color:var(--brand-deep);letter-spacing:.08em}
+.bar{flex:1 1 0;min-width:0;position:relative;height:100%;display:flex;align-items:flex-end;background:none}
+.bar i{display:block;width:100%;background:var(--brand);border-radius:2px 2px 0 0;min-height:0;transition:background .15s}
+.bar.hit i{background:var(--go)}
+.bar.zero i{background:var(--track);height:2px !important}
+.bar:hover i,.bar.sel i{background:var(--ink)}
+.plot-axis{display:flex;justify-content:space-between;margin-top:7px}
+.plot-axis span{font-family:var(--mono);font-size:8.5px;color:var(--ink-3);letter-spacing:.06em}
+
+/* ---------------- squad ---------------- */
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:20px 0 12px}
+.squad{display:flex;flex-direction:column;gap:7px}
+.mate{display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--panel);border:1px solid var(--rule);position:relative}
+.mate.me{border-color:var(--brand)}
+.mate.me::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand)}
+.rank{font-family:var(--display);font-size:14px;color:var(--ink-3);width:14px;flex-shrink:0;text-align:center}
+.av{width:36px;height:36px;flex-shrink:0;display:grid;place-items:center;font-family:var(--display);font-size:15px;color:var(--on-brand)}
+.mate-body{flex:1;min-width:0}
+.mate-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.you-tag{font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);border:1px solid var(--brand-deep);padding:1px 4px}
+.mate-plan{font-family:var(--mono);font-size:10px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.mini{display:flex;gap:1px;align-items:flex-end;height:11px;margin-top:5px}
+.mini span{flex:1 1 0;min-width:0;background:var(--track);height:3px}
+.mini span.done{background:var(--go);height:11px}
+.mini span.part{background:var(--go-dim);height:7px}
+.mini span.rest{background:var(--rest);height:5px}
+.mini span.miss{background:var(--miss);height:3px}
+.mate-right{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.mate-day{font-family:var(--display);font-size:25px;line-height:1;font-variant-numeric:tabular-nums}
+.bonus-badge{font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.08em;color:var(--bonus);border:1px solid var(--bonus);padding:1px 5px}
+.today-tag{font-family:var(--mono);font-size:8px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;color:var(--ink-3);border:1px solid var(--rule-soft)}
+.today-tag.in{color:var(--go);border-color:var(--go)}
+.today-tag.rest{color:var(--rest);border-color:var(--rest)}
+
+.key{display:flex;flex-wrap:wrap;gap:11px;margin-top:13px}
+.key-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:8.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.key-sw{width:9px;height:9px;background:var(--track)}
+
+/* ---------------- the race ---------------- */
+.race{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.lane{display:flex;align-items:center;gap:9px}
+.lane-av{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;font-family:var(--display);font-size:12px;color:var(--on-brand)}
+.lane-track{flex:1;min-width:0;height:15px;background:var(--ground-2);border:1px solid var(--rule-soft);position:relative}
+.lane-track i{display:block;height:100%;transition:width .5s cubic-bezier(.22,.9,.3,1)}
+.lane-track.lead::after{content:"";position:absolute;inset:-1px;border:1px solid var(--brand);pointer-events:none}
+.lane-n{font-family:var(--mono);font-size:11px;font-weight:700;width:24px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.lane-n.lead{color:var(--brand)}
+.race-foot{display:flex;justify-content:space-between;margin-top:8px}
+
+/* who is in today */
+.roll{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.roll-chip{display:flex;align-items:center;gap:6px;padding:4px 9px 4px 4px;border:1px solid var(--rule-soft);background:var(--panel)}
+.roll-chip.in{border-color:var(--go)}
+.roll-chip.rest{border-color:var(--rest)}
+.roll-av{width:19px;height:19px;display:grid;place-items:center;font-family:var(--display);font-size:9px;color:var(--on-brand)}
+.roll-name{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.roll-chip.in .roll-name{color:var(--go)}
+.roll-chip.rest .roll-name{color:var(--rest)}
+
+.awards{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.award{font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:2px 5px;border:1px solid currentColor}
+.award.lead{color:var(--brand)}
+.award.streak{color:var(--go)}
+.award.bonus{color:var(--bonus)}
+.award.mins{color:var(--ink-2)}
+.award.perfect{color:var(--go)}
+
+.copybox{width:100%;margin-top:8px;font-family:var(--mono);font-size:11px;line-height:1.6;
+  padding:11px 13px;border:1px solid var(--brand-deep);background:var(--ground-2);color:var(--ink-2);resize:vertical;min-height:96px}
+
+/* ---------------- the card ---------------- */
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cell{
+  aspect-ratio:1;border:1px solid var(--rule-soft);background:var(--panel);position:relative;display:grid;place-items:center;
+  font-family:var(--mono);font-weight:500;font-size:10px;color:var(--ink-3);transition:transform .09s;
+}
+.cell:active{transform:scale(.9)}
+.cell .n{position:absolute;top:3px;left:4px;font-size:8px;opacity:.75}
+.cell .m{display:grid;place-items:center;font-size:13px;line-height:1}
+.cell .m svg{width:12px;height:12px}
+.cell .b{position:absolute;top:3px;right:4px;width:5px;height:5px;background:var(--bonus)}
+.cell.done{background:var(--go);border-color:var(--go);color:var(--on-go)}
+.cell.done .n{opacity:.6}
+.cell.part{border-color:var(--go-dim);color:var(--go)}
+.cell.miss{border-color:var(--miss);color:var(--miss)}
+.cell.rest{border-color:var(--rest);color:var(--rest)}
+.cell.future{background:transparent;border-style:dashed;opacity:.45}
+.cell.today{outline:2px solid var(--ink);outline-offset:1px;color:var(--ink)}
+.cell.today.done{color:var(--on-go)}
+
+/* ---------------- forms ---------------- */
+.field{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.field > label{font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.hint{font-size:11.5px;color:var(--ink-3);line-height:1.5}
+.steps{counter-reset:s;margin:2px 0 9px}
+.steps li{counter-increment:s;position:relative;padding-left:24px;font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-top:5px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:16px;height:16px;
+  font-family:var(--mono);font-size:9px;font-weight:700;color:var(--on-brand);background:var(--brand);
+  display:grid;place-items:center}
+.steps li b{color:var(--ink);font-weight:700}
+.input{
+  width:100%;padding:11px 13px;border:1px solid var(--rule);background:var(--ground-2);color:var(--ink);
+  font-size:14.5px;transition:border-color .18s;
+}
+.input::placeholder{color:var(--ink-3)}
+.input:focus{outline:none;border-color:var(--brand)}
+textarea.input{resize:vertical;min-height:74px;font-family:var(--mono);font-size:12.5px;line-height:1.5}
+select.input{appearance:none}
+.inline{display:flex;gap:7px;align-items:center}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.btn{
+  padding:11px 16px;font-weight:700;font-size:13.5px;border:1px solid var(--rule);color:var(--ink);background:var(--panel);
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:transform .09s,border-color .18s;
+}
+.btn:active{transform:scale(.977)}
+.btn.primary{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+.btn.ghost{border-style:dashed;color:var(--ink-2);background:transparent}
+.btn.danger{color:var(--miss);border-color:var(--miss);background:transparent}
+.btn.rest{color:var(--rest);border-color:var(--rest);background:transparent}
+.btn.block{width:100%}
+.btn.sm{padding:7px 11px;font-size:12px}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn[disabled]:active{transform:none}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pick{font-size:12px;font-weight:600;padding:7px 11px;border:1px solid var(--rule);color:var(--ink-2);background:var(--panel);transition:color .16s,background .16s,border-color .16s}
+.pick.on{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+
+.editrow{display:flex;gap:9px;align-items:flex-start;padding:11px;background:var(--panel);border:1px solid var(--rule-soft);margin-top:7px}
+.editrow .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.editrow .input{padding:8px 10px;font-size:13.5px}
+.editrow .input.small{font-size:12px;color:var(--ink-2)}
+.reqtoggle{font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 8px;border:1px solid var(--rule);color:var(--ink-3);white-space:nowrap}
+.reqtoggle.core{border-color:var(--go);color:var(--go)}
+.reqtoggle.bonus{border-color:var(--bonus);color:var(--bonus)}
+.xbtn{width:30px;height:30px;display:grid;place-items:center;color:var(--ink-3);border:1px solid transparent;flex-shrink:0;transition:color .18s,border-color .18s}
+.xbtn:hover{color:var(--miss);border-color:var(--miss)}
+.xbtn svg{width:13px;height:13px}
+
+/* ---------------- gate ---------------- */
+.gate{display:flex;flex-direction:column;justify-content:center;min-height:100dvh;padding:44px 0 34px;position:relative}
+.gate-title{font-family:var(--display);font-size:64px;line-height:.86;letter-spacing:.015em;text-transform:uppercase;margin-top:9px}
+.gate-sub{margin-top:13px;font-size:14.5px;color:var(--ink-2);line-height:1.6;max-width:34ch}
+.rules-peek{margin-top:18px;padding:14px 16px;background:var(--panel);border:1px solid var(--rule)}
+.rules-peek li{font-size:13.5px;color:var(--ink-2);padding:4px 0;display:flex;gap:11px;align-items:center}
+.rules-peek li::before{content:"";width:6px;height:6px;background:var(--go);flex-shrink:0}
+.rules-peek li.b::before{background:var(--bonus)}
+.who{display:flex;flex-direction:column;gap:7px;margin-top:20px}
+.who-btn{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--rule);background:var(--panel);text-align:left;transition:border-color .16s}
+.who-btn:hover{border-color:var(--brand)}
+.who-sub{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+
+/* ---------------- tab bar ---------------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;pointer-events:none;padding:0 18px calc(14px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.tabbar-inner{
+  pointer-events:auto;width:100%;max-width:376px;display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--rule);background:color-mix(in srgb,var(--panel) 90%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.tab{padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-3);border-left:1px solid var(--rule-soft);transition:color .2s,background .2s}
+.tab:first-child{border-left:0}
+.tab.on{color:var(--on-brand);background:var(--brand)}
+.tab svg{width:18px;height:18px;display:block}
+.tab span{font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+
+.footer-note{margin-top:20px;font-size:11px;color:var(--ink-3);line-height:1.6;text-align:center}
+.footer-note.left{text-align:left;margin-top:10px}
+.footer-note b{color:var(--ink-2);font-weight:700}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0ms !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script id="app-state" type="application/json">null</script>
+<script id="app-js">
+(function () {
+  'use strict';
+
+  /* ============================================================
+     Hard Enough — 75 Hard scaled to something you'll finish.
+     Storage picks itself at load:
+       shared — published Artifact page; a check-in publishes a new
+                version of this document, so the squad shares one board.
+       local  — plain file / static host; state lives in localStorage.
+     ============================================================ */
+
+  var LS_KEY = 'hard-enough:state';
+  var LS_ME = 'hard-enough:me';
+  var FONTS = 'https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap';
+  /* People, not states. Deliberately clear of the status hues (mint/gold/
+     coral/cornflower) so an avatar never reads as "complete" or "missed".
+     With four hues already reserved there is no fully CVD-safe 6-person set
+     -- cyan/pink and lime/amber collapse for deuteranopes whatever the order
+     -- so identity never rests on colour: every member mark carries initials.
+     This set passes normal-vision separation and contrast against the panel. */
+  var COLORS = ['#8B93FF', '#FFB03C', '#2FC8D4', '#FF6FB5', '#A8DE5C'];
+  var OLD_COLORS = /^#(FF4B26|E23A16|0FA873|7442D6|B57B08|C2472F|3D6EA8|0E9975|82A3CC|4BE3AE|FFCC4D|FF6F61|9BB8DE|6FD3C7|E0A3D6|C9D46A)$/i;
+
+  var PLANS = ['Whole foods, nothing processed','High protein','Mediterranean','Plant-based','Low carb','Calorie target','Cut out sugar','No alcohol'];
+  var WO_QUICK = ['Run','Walk','Lift','Ride','Yoga','Pilates','HIIT','Swim'];
+  // recognised when parsing pasted text; the field itself accepts anything
+  var WO_TYPES = ['Run','Walk','Hike','Lift','Strength','Ride','Cycling','Spin','Swim','Row','Yoga','Pilates',
+    'Barre','HIIT','CrossFit','Elliptical','Stair','Boxing','Dance','Tennis','Basketball','Soccer','Golf',
+    'Climb','Core','Stretch','Mobility','Functional','Treadmill','Sport','Other'];
+
+  function defaultState() {
+    return {
+      v: 3,
+      challenge: {
+        name: 'Hard Enough',
+        days: 45,
+        restDays: 5,
+        workoutTarget: 45,
+        reset: { enabled: true, allowance: 3 },
+        tasks: [
+          { id: 't1', label: '45-minute workout', detail: 'One session. Outdoors if you can.', required: true, auto: 'workout' },
+          { id: 't2', label: 'Follow your nutrition plan', detail: 'The one you picked. No cheat meals.', required: true, usesPlan: true },
+          { id: 't3', label: 'Drink 1 gallon of water', detail: 'About 3.8 litres. Sip all day.', required: true },
+          { id: 't4', label: 'Read 10 pages', detail: 'Nonfiction, traditionally. Your call.', required: true },
+          { id: 't5', label: 'Second 45-minute workout', detail: 'The full 75 Hard load. Outdoors.', required: false, auto: 'workout2' },
+          { id: 't6', label: 'Progress photo', detail: 'Same spot, same light.', required: false }
+        ]
+      },
+      members: [],
+      log: {},
+      rest: {},
+      workouts: {}
+    };
+  }
+
+  /* ---------------- dates (local time, never UTC) ---------------- */
+
+  function toKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function fromKey(k) { var p = String(k).split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])); }
+  function addDays(k, n) { var d = fromKey(k); return toKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)); }
+  function daysBetween(a, b) { return Math.round((fromKey(b).getTime() - fromKey(a).getTime()) / 86400000); }
+  function todayKey() { return toKey(new Date()); }
+  function prettyDate(k) { return fromKey(k).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
+
+  /* ---------------- derived ---------------- */
+
+  function coreIds(s) { return s.challenge.tasks.filter(function (t) { return t.required; }).map(function (t) { return t.id; }); }
+  function bonusIds(s) { return s.challenge.tasks.filter(function (t) { return !t.required; }).map(function (t) { return t.id; }); }
+  function doneOn(s, m, k) { var b = s.log[m]; return (b && b[k]) || []; }
+  function dayComplete(s, m, k) {
+    var core = coreIds(s), got = doneOn(s, m, k);
+    if (!core.length) return got.length > 0;
+    return core.every(function (id) { return got.indexOf(id) !== -1; });
+  }
+  function dayTouched(s, m, k) { return doneOn(s, m, k).length > 0 || workoutsOn(s, m, k).length > 0; }
+  function isRest(s, m, k) { return (s.rest[m] || []).indexOf(k) !== -1; }
+  function bonusOn(s, m, k) {
+    var b = bonusIds(s);
+    return doneOn(s, m, k).filter(function (id) { return b.indexOf(id) !== -1; }).length;
+  }
+  function workoutsOn(s, m, k) { var b = s.workouts[m]; return (b && b[k]) || []; }
+  function minutesOn(s, m, k) {
+    return workoutsOn(s, m, k).reduce(function (a, w) { return a + (Number(w.min) || 0); }, 0);
+  }
+
+  function dayIndex(member, k) { return daysBetween(member.startDate, k) + 1; }
+  function keyForDay(member, n) { return addDays(member.startDate, n - 1); }
+
+  function stats(s, member) {
+    var total = s.challenge.days;
+    var todayIdx = dayIndex(member, todayKey());
+    var elapsed = Math.min(Math.max(todayIdx, 0), total);
+    var done = 0, missed = 0, restUsed = 0, bonus = 0, streak = 0, run = 0;
+    var mins = 0, kcal = 0, hrSum = 0, hrN = 0, sessions = 0;
+
+    for (var i = 1; i <= elapsed; i++) {
+      var k = keyForDay(member, i);
+      bonus += bonusOn(s, member.id, k);
+      workoutsOn(s, member.id, k).forEach(function (w) {
+        mins += Number(w.min) || 0;
+        kcal += Number(w.kcal) || 0;
+        if (w.hr) { hrSum += Number(w.hr); hrN++; }
+        sessions++;
+      });
+
+      if (dayComplete(s, member.id, k)) {
+        // Doing the work on a day you had booked off refunds the rest day.
+        done++; run++; streak = run;
+      } else if (isRest(s, member.id, k)) {
+        // A planned break: not done, not missed, and the streak survives it.
+        restUsed++;
+      } else if (i < todayIdx) {
+        missed++; run = 0; streak = 0;
+      }
+    }
+
+    var allowance = s.challenge.reset.enabled ? s.challenge.reset.allowance : Infinity;
+    return {
+      total: total, dayIndex: todayIdx, current: Math.min(Math.max(todayIdx, 1), total),
+      done: done, missed: missed, bonus: bonus, restUsed: restUsed,
+      restLeft: Math.max(s.challenge.restDays - restUsed, 0),
+      streak: streak, remaining: Math.max(total - elapsed, 0),
+      mins: mins, kcal: kcal, sessions: sessions,
+      avgHr: hrN ? Math.round(hrSum / hrN) : 0,
+      blown: allowance !== Infinity && missed > allowance, allowance: allowance,
+      notStarted: todayIdx < 1, finished: todayIdx > total
+    };
+  }
+
+  /* ---------------- state + storage ----------------
+     The board lives in Supabase. Check-ins are ROWS, not one document, so
+     two people ticking a box in the same second touch different rows and
+     there is nothing to conflict over.
+
+     The board id rides in the URL fragment (#b=...) and is never committed:
+     the anon key below is public by design and sits in the page source
+     either way, so the link is what actually guards the board. */
+
+  var SUPABASE = {
+    url: 'https://uwwcchslelxnyarjjosk.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3d2NjaHNsZWx4bnlhcmpqb3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODY5NDAsImV4cCI6MjEwMzE2Mjk0MH0.1brbhXxmjPlPoCaHGzebbM_eqdHrdZxug5IOeeAQI1o'
+  };
+
+  var LS_KEY = 'hard-enough:state';
+  var LS_ME = 'hard-enough:me';
+  var LS_BOARD = 'hard-enough:board';
+
+  var state = null, mode = 'local', me = null, tab = 'today', boardId = null;
+  var status = 'idle', inflight = 0, saveTimer = null, pollTimer = null, lastTouch = 0;
+  var popId = null, openDay = null, gatePlan = '', woForm = null, selBar = null, copyBox = null, linkBox = null;
+  var needBoard = false, joinError = '';
+
+  /* ---- REST plumbing ---- */
+  async function sbFetch(path, opts) {
+    opts = opts || {};
+    var headers = {
+      apikey: SUPABASE.key,
+      Authorization: 'Bearer ' + SUPABASE.key,
+      'Content-Type': 'application/json'
+    };
+    if (opts.prefer) headers.Prefer = opts.prefer;
+    var res = await fetch(SUPABASE.url + '/rest/v1/' + path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    if (!res.ok) throw new Error('supabase ' + res.status + ': ' + (await res.text()).slice(0, 140));
+    if (res.status === 204) return null;
+    var txt = await res.text();
+    return txt ? JSON.parse(txt) : null;
+  }
+
+  function track(promise) {
+    inflight++;
+    lastTouch = Date.now();
+    setStatus('saving');
+    return promise.then(function (r) {
+      if (--inflight <= 0) { inflight = 0; setStatus('saved'); }
+      return r;
+    }, function (err) {
+      if (--inflight <= 0) inflight = 0;
+      setStatus('error');
+      if (window.console) console.warn('[hard-enough]', err && err.message);
+    });
+  }
+
+  /* ---- board identity ---- */
+  function readBoardId() {
+    var m = String(location.hash || '').match(/b=([A-Za-z0-9_-]{6,40})/);
+    return m ? m[1] : null;
+  }
+  function newSlug() {
+    var out = '', abc = 'abcdefghijkmnpqrstuvwxyz23456789';
+    for (var i = 0; i < 12; i++) out += abc.charAt(Math.floor(Math.random() * abc.length));
+    return out;
+  }
+  function stampHash() {
+    try { history.replaceState(null, '', location.pathname + location.search + '#b=' + boardId); }
+    catch (e) { location.hash = 'b=' + boardId; }
+    try { localStorage.setItem(LS_BOARD, boardId); } catch (e) { /* private mode */ }
+  }
+  function boardLink() {
+    return location.origin + location.pathname + '#b=' + boardId;
+  }
+
+  function migrate(s) {
+    if (!s || typeof s !== 'object') return defaultState();
+    var d = defaultState();
+    s.challenge = Object.assign({}, d.challenge, s.challenge || {});
+    s.challenge.reset = Object.assign({}, d.challenge.reset, s.challenge.reset || {});
+    if (typeof s.challenge.restDays !== 'number') s.challenge.restDays = d.challenge.restDays;
+    if (typeof s.challenge.workoutTarget !== 'number') s.challenge.workoutTarget = d.challenge.workoutTarget;
+    if (!Array.isArray(s.challenge.tasks)) s.challenge.tasks = d.challenge.tasks;
+    if (!Array.isArray(s.members)) s.members = [];
+    if (!s.log || typeof s.log !== 'object') s.log = {};
+    if (!s.rest || typeof s.rest !== 'object') s.rest = {};
+    if (!s.workouts || typeof s.workouts !== 'object') s.workouts = {};
+    s.members.forEach(function (m, i) {
+      if (!m.startDate) m.startDate = todayKey();
+      if (!m.color || OLD_COLORS.test(m.color)) m.color = COLORS[i % COLORS.length];
+      if (typeof m.plan !== 'string') m.plan = '';
+    });
+    s.v = 3;
+    return s;
+  }
+
+  /* ---- load the whole board in two requests ---- */
+  async function loadBoard() {
+    var boards = await sbFetch('boards?select=id,challenge&id=eq.' + encodeURIComponent(boardId));
+    if (!boards || !boards.length) return null;
+    var rows = await sbFetch('members?select=id,name,color,plan,start_date,' +
+      'checkins(day,task_ids),rest_days(day),workouts(id,day,type,min,kcal,hr)' +
+      '&board_id=eq.' + encodeURIComponent(boardId) + '&order=created_at.asc');
+    var s = { v: 3, challenge: boards[0].challenge || {}, members: [], log: {}, rest: {}, workouts: {} };
+    (rows || []).forEach(function (r) {
+      s.members.push({ id: r.id, name: r.name, color: r.color, plan: r.plan || '', startDate: r.start_date });
+      (r.checkins || []).forEach(function (c) {
+        (s.log[r.id] = s.log[r.id] || {})[c.day] = c.task_ids || [];
+      });
+      (r.rest_days || []).forEach(function (d) {
+        (s.rest[r.id] = s.rest[r.id] || []).push(d.day);
+      });
+      (r.workouts || []).forEach(function (w) {
+        var byDay = (s.workouts[r.id] = s.workouts[r.id] || {});
+        (byDay[w.day] = byDay[w.day] || []).push({ id: w.id, type: w.type, min: w.min, kcal: w.kcal, hr: w.hr });
+      });
+    });
+    return migrate(s);
+  }
+
+  async function initStorage() {
+    try { me = localStorage.getItem(LS_ME); } catch (e) { me = null; }
+
+    var stored = null;
+    try { stored = localStorage.getItem(LS_BOARD); } catch (e) { stored = null; }
+    boardId = readBoardId() || stored;
+
+    if (SUPABASE.url) {
+      try {
+        if (!boardId) {
+          // No link, no memory: ASK. Silently making a new board here is how
+          // five people each ended up alone on five different boards.
+          mode = 'cloud';
+          needBoard = true;
+          state = migrate(defaultState());
+          setStatus('idle');
+          return;
+        }
+        var loaded = await loadBoard();
+        if (!loaded) {
+          // The code was mistyped, or the board is gone. Ask rather than
+          // quietly starting a fresh one under the same name.
+          mode = 'cloud';
+          needBoard = true;
+          joinError = 'No board with the code ' + boardId + '.';
+          boardId = null;
+          try { localStorage.removeItem(LS_BOARD); } catch (e) { /* ignore */ }
+          state = migrate(defaultState());
+          setStatus('idle');
+          return;
+        }
+        state = loaded;
+        mode = 'cloud';
+        stampHash();
+        setStatus('idle');
+        schedulePoll();
+      } catch (err) {
+        if (window.console) console.warn('[hard-enough] cloud unavailable:', err && err.message);
+      }
+    }
+
+    if (mode !== 'cloud') {           // offline or misconfigured: this device only
+      var raw = null;
+      try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
+      try { state = migrate(raw ? JSON.parse(raw) : defaultState()); }
+      catch (e) { state = migrate(defaultState()); }
+    }
+
+    if (me && !member(me)) me = null;
+  }
+
+  /* ---- status ---- */
+  function statusLabel(s) {
+    if (s === 'saving') return 'Saving';
+    if (s === 'saved') return 'Saved';
+    if (s === 'error') return 'Offline';
+    return mode === 'cloud' ? 'Live' : 'This phone';
+  }
+  function setStatus(s) {
+    status = s;
+    var el = document.getElementById('status-chip');
+    if (el) { el.dataset.state = s; el.textContent = statusLabel(s); }
+  }
+
+  function saveLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); setStatus('saved'); }
+    catch (e) { setStatus('error'); }
+  }
+
+  /* ---- writes: one row per thing that changed ---- */
+  function pushChallenge() {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('boards?id=eq.' + encodeURIComponent(boardId),
+      { method: 'PATCH', body: { challenge: state.challenge } }));
+  }
+  function pushMember(m) {
+    if (!m) return;
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('members', { method: 'POST', prefer: 'resolution=merge-duplicates',
+      body: { id: m.id, board_id: boardId, name: m.name, color: m.color, plan: m.plan || '', start_date: m.startDate } }));
+  }
+  function pushCheckin(memberId, dateKey) {
+    if (mode !== 'cloud') return saveLocal();
+    var ids = doneOn(state, memberId, dateKey);
+    if (!ids.length) {
+      return track(sbFetch('checkins?member_id=eq.' + encodeURIComponent(memberId) +
+        '&day=eq.' + encodeURIComponent(dateKey), { method: 'DELETE' }));
+    }
+    return track(sbFetch('checkins', { method: 'POST', prefer: 'resolution=merge-duplicates',
+      body: { member_id: memberId, day: dateKey, task_ids: ids } }));
+  }
+  function pushRest(memberId, dateKey, on) {
+    if (mode !== 'cloud') return saveLocal();
+    if (on) {
+      return track(sbFetch('rest_days', { method: 'POST', prefer: 'resolution=merge-duplicates',
+        body: { member_id: memberId, day: dateKey } }));
+    }
+    return track(sbFetch('rest_days?member_id=eq.' + encodeURIComponent(memberId) +
+      '&day=eq.' + encodeURIComponent(dateKey), { method: 'DELETE' }));
+  }
+  function pushWorkout(memberId, dateKey, w) {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('workouts', { method: 'POST',
+      body: { id: w.id, member_id: memberId, day: dateKey, type: w.type, min: w.min, kcal: w.kcal, hr: w.hr } }));
+  }
+  function dropWorkout(id) {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('workouts?id=eq.' + encodeURIComponent(id), { method: 'DELETE' }));
+  }
+  function dropMember(id) {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('members?id=eq.' + encodeURIComponent(id), { method: 'DELETE' }));
+  }
+  function clearMemberRows(id) {
+    if (mode !== 'cloud') return saveLocal();
+    var q = 'member_id=eq.' + encodeURIComponent(id);
+    return track(Promise.all([
+      sbFetch('checkins?' + q, { method: 'DELETE' }),
+      sbFetch('rest_days?' + q, { method: 'DELETE' }),
+      sbFetch('workouts?' + q, { method: 'DELETE' })
+    ]));
+  }
+
+  // Text fields fire per keystroke, so those go through a debounce.
+  function scheduleSave(delay) {
+    clearTimeout(saveTimer);
+    lastTouch = Date.now();
+    setStatus('saving');
+    saveTimer = setTimeout(function () {
+      saveTimer = null;
+      if (mode !== 'cloud') return saveLocal();
+      pushChallenge();
+      pushMember(member(me));
+    }, delay || 700);
+  }
+
+  /* ---- polling: brisk while in use, lazy when idle, paused when hidden ---- */
+  function schedulePoll() {
+    clearTimeout(pollTimer);
+    var idle = Date.now() - lastTouch > 120000;
+    pollTimer = setTimeout(poll, idle ? 20000 : 4000);
+  }
+  async function poll() {
+    if (mode !== 'cloud') return;
+    var ae = document.activeElement;
+    var typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
+    // a pending debounce means the local copy is ahead of the server;
+    // refetching now would silently revert what was just typed
+    if (document.hidden || inflight || typing || saveTimer) return schedulePoll();
+    try {
+      var fresh = await loadBoard();
+      if (fresh && JSON.stringify(fresh) !== JSON.stringify(state)) {
+        state = fresh;
+        if (me && !member(me)) me = null;
+        var y = window.scrollY;
+        render();
+        window.scrollTo(0, y);
+      }
+      if (status === 'error') setStatus('idle');
+    } catch (e) {
+      setStatus('error');
+    }
+    schedulePoll();
+  }
+
+  /* ---------------- helpers ---------------- */
+
+  function escapeHtml(v) {
+    return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function initials(name) {
+    var p = String(name || '?').trim().split(/\s+/);
+    return (p.length === 1 ? p[0].slice(0, 1) : p[0][0] + p[p.length - 1][0]).toUpperCase();
+  }
+  function uid(p) { return p + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3); }
+  function member(id) { return state.members.filter(function (m) { return m.id === id; })[0] || null; }
+  function plural(n, a, b) { return n === 1 ? a : b; }
+  function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function taskDetail(t, m) {
+    if (t.usesPlan && m && m.plan) return { text: m.plan, plan: true };
+    return { text: t.detail || '', plan: false };
+  }
+
+  var ICONS = {
+    check: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>',
+    today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.8" fill="currentColor" stroke="none"/></svg>',
+    train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2M19 12h2M6.5 8v8M17.5 8v8M9.5 6.5v11M14.5 6.5v11M9.5 12h5"/></svg>',
+    squad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.3"/><path d="M2.8 20c0-3.4 2.8-5.6 6.2-5.6s6.2 2.2 6.2 5.6"/><path d="M16.5 5.2a3.4 3.4 0 0 1 0 6.5M18 14.8c2.1.6 3.4 2.4 3.4 5.2"/></svg>',
+    grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h9M17.5 7H20M4 17h3.5M12 17h8"/><circle cx="15.5" cy="7" r="2.4"/><circle cx="9.5" cy="17" r="2.4"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  };
+  var CHECK_SM = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px"><path d="M4 10.5l4 4 8-9"/></svg>';
+
+  /* ---------------- workouts ----------------
+     Logging a session drives the workout checkmarks, so you enter the
+     numbers once instead of logging and ticking. */
+
+  function autoTickWorkouts(memberId, dateKey) {
+    var entries = workoutsOn(state, memberId, dateKey);
+    var target = state.challenge.workoutTarget || 45;
+    var mins = entries.reduce(function (a, w) { return a + (Number(w.min) || 0); }, 0);
+    var primary = state.challenge.tasks.filter(function (t) { return t.auto === 'workout'; });
+    var second = state.challenge.tasks.filter(function (t) { return t.auto === 'workout2'; });
+    if (!entries.length) {
+      primary.concat(second).forEach(function (t) { setTick(memberId, dateKey, t.id, false); });
+      return;
+    }
+    primary.forEach(function (t) { setTick(memberId, dateKey, t.id, mins >= target); });
+    second.forEach(function (t) { setTick(memberId, dateKey, t.id, mins >= target * 2); });
+  }
+
+  function setTick(memberId, dateKey, taskId, on) {
+    if (!state.log[memberId]) state.log[memberId] = {};
+    var day = state.log[memberId][dateKey] || [];
+    var i = day.indexOf(taskId);
+    if (on && i === -1) day.push(taskId);
+    if (!on && i !== -1) day.splice(i, 1);
+    if (day.length) state.log[memberId][dateKey] = day;
+    else delete state.log[memberId][dateKey];
+  }
+
+  /* Pull duration / calories / heart rate out of text pasted from a watch app.
+     Tuned against real output. The traps in an Ultrahuman screenshot: a
+     status-bar clock, a start-end range, five per-zone durations that all
+     look like MM:SS, and a MAX HR sitting right beside the average. */
+  function parseWorkoutText(txt) {
+    var out = { min: 0, kcal: 0, hr: 0, type: '' };
+    if (!txt) return out;
+    var t = String(txt).replace(/[\u2013\u2014]/g, '-').replace(/[\u00b7\u2022]/g, ' ').replace(/,/g, '');
+    var m;
+
+    // duration, most specific first
+    if ((m = t.match(/(\d{1,2}):([0-5]\d):([0-5]\d)(?!\d)/)))                              // 00:42:30
+      out.min = Math.round(Number(m[1]) * 60 + Number(m[2]) + Number(m[3]) / 60);
+    if (!out.min && (m = t.match(/(\d{1,3}):([0-5]\d)\s*(?:m|min|mins|minutes)\b/i)))       // 54:15 m
+      out.min = Math.round(Number(m[1]) + Number(m[2]) / 60);
+    if (!out.min && (m = t.match(/(\d{1,2}):([0-5]\d)\s*([AaPp])\.?[Mm]\.?\s*-\s*(\d{1,2}):([0-5]\d)\s*([AaPp])\.?[Mm]/))) {
+      var a = (Number(m[1]) % 12) * 60 + Number(m[2]) + (/p/i.test(m[3]) ? 720 : 0);
+      var b = (Number(m[4]) % 12) * 60 + Number(m[5]) + (/p/i.test(m[6]) ? 720 : 0);
+      if (b < a) b += 1440;
+      out.min = b - a;
+    }
+    if (!out.min) {
+      var hh = t.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
+      var mn = t.match(/(\d+)\s*(?:minutes?|mins?|m)\b/i);
+      if (hh) out.min += Math.round(Number(hh[1]) * 60);
+      if (mn) out.min += Number(mn[1]);
+    }
+    if (!out.min) {   // bare MM:SS only when it cannot be confused with a clock or a zone
+      var lab = t.match(/(?:duration|elapsed|total\s*time|moving\s*time)\D{0,8}(\d{1,3}):([0-5]\d)/i);
+      // no lookbehind: a bad regex literal is a parse error, not a runtime one,
+      // and would blank the page on older Safari.
+      var all = [], bare = /(^|[^\d:])(\d{1,3}):([0-5]\d)(?![\d:])/g, bm;
+      while ((bm = bare.exec(t))) all.push([bm[2], bm[3]]);
+      if (lab) out.min = Math.round(Number(lab[1]) + Number(lab[2]) / 60);
+      else if (all.length === 1) out.min = Math.round(Number(all[0][0]) + Number(all[0][1]) / 60);
+    }
+
+    // calories
+    var cal = t.match(/(\d{2,5})\s*k?cal(?:ories)?\b/i) ||
+              t.match(/(?:total\s*)?(?:calories|energy)[^\d\n]{0,12}(\d{2,5})/i);
+    if (cal) out.kcal = Math.round(Number(cal[1]));
+
+    // heart rate: a number labelled AVERAGE wins; never MAX, never a zone bound
+    var avg = t.match(/(\d{2,3})\s*bpm\s*(?:average|avg)/i) ||
+              t.match(/(?:average|avg)\.?\s*(?:heart\s*rate|hr|bpm)?[^\d\n]{0,10}?(\d{2,3})/i);
+    if (avg) out.hr = Number(avg[1]);
+    if (!out.hr) {
+      var re = /(?:^|[^\d<>\-])(\d{2,3})\s*bpm(?!\s*(?:max|maximum))/gi, hit;
+      while ((hit = re.exec(t))) {
+        var before = t.slice(Math.max(0, hit.index - 14), hit.index);
+        if (/max|maximum|zone|resting/i.test(before)) continue;
+        if (/[<>\-]\s*$/.test(before)) continue;
+        out.hr = Number(hit[1]);
+        break;
+      }
+    }
+
+    // activity
+    for (var i = 0; i < WO_TYPES.length; i++) {
+      if (new RegExp('\\b' + WO_TYPES[i] + '\\b', 'i').test(t)) { out.type = WO_TYPES[i]; break; }
+    }
+    if (!out.type && /cycl|bike/i.test(t)) out.type = 'Ride';
+    if (!out.type && /weight/i.test(t)) out.type = 'Lift';
+    return out;
+  }
+
+  function addWorkout(memberId, dateKey, w) {
+    if (!state.workouts[memberId]) state.workouts[memberId] = {};
+    var day = state.workouts[memberId][dateKey] || [];
+    day.push({ id: uid('w'), type: w.type || 'Other', min: Number(w.min) || 0, kcal: Number(w.kcal) || 0, hr: Number(w.hr) || 0 });
+    state.workouts[memberId][dateKey] = day;
+    var added = day[day.length - 1];
+    autoTickWorkouts(memberId, dateKey);
+    pushWorkout(memberId, dateKey, added);
+    pushCheckin(memberId, dateKey);
+  }
+
+  function removeWorkout(memberId, dateKey, id) {
+    var day = (state.workouts[memberId] && state.workouts[memberId][dateKey]) || [];
+    day = day.filter(function (w) { return w.id !== id; });
+    if (day.length) state.workouts[memberId][dateKey] = day;
+    else if (state.workouts[memberId]) delete state.workouts[memberId][dateKey];
+    autoTickWorkouts(memberId, dateKey);
+    dropWorkout(id);
+    pushCheckin(memberId, dateKey);
+  }
+
+  /* ---------------- choose a board ---------------- */
+
+  function viewChooseBoard() {
+    var out = '<div class="gate"><div class="gate-mark">Hard Enough</div>';
+    out += '<div class="eyebrow rise" style="--i:0">Before you start</div>';
+    out += '<h1 class="gate-title rise" style="--i:1">Which board?</h1>';
+    out += '<p class="gate-sub rise" style="--i:2">Everyone in a squad has to be on the <b>same</b> board. ' +
+      'If a friend already started one, join theirs — do not start a second.</p>';
+    if (joinError) out += '<div class="note alert rise" style="--i:3">' + escapeHtml(joinError) + '</div>';
+    out += '<div class="field rise" style="--i:4"><label for="join-code">Join your squad</label>' +
+      '<input class="input" id="join-code" placeholder="Paste the link or the code" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+      '<button class="btn primary block" data-act="join-board" style="margin-top:8px">Join that board</button></div>';
+    out += '<div class="rule"></div>';
+    out += '<button class="btn ghost block" data-act="new-board" style="margin-top:16px">Start a new board</button>';
+    out += '<p class="footer-note rise" style="--i:5">Only one person should start the board. Everyone else joins it.</p>';
+    return out + '</div>';
+  }
+
+  /* ---------------- gate ---------------- */
+
+  function planChips(sel, action) {
+    return '<div class="chips">' + PLANS.map(function (p) {
+      return '<button class="pick' + (sel === p ? ' on' : '') + '" data-act="' + action + '" data-plan="' + escapeHtml(p) + '">' + escapeHtml(p) + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function viewGate() {
+    var c = state.challenge;
+    var first = state.members.length === 0;
+    var core = c.tasks.filter(function (t) { return t.required; });
+    var extra = c.tasks.filter(function (t) { return !t.required; });
+    var out = '<div class="gate"><div class="gate-mark">' + escapeHtml(c.name) + '</div>';
+    out += '<div class="eyebrow rise" style="--i:0">' + (first ? 'Day zero' : 'Welcome back') + '</div>';
+    out += '<h1 class="gate-title rise" style="--i:1">' + escapeHtml(c.name) + '</h1>';
+
+    if (first) {
+      out += '<p class="gate-sub rise" style="--i:2">75 Hard, scaled to something you will actually finish. ' +
+        c.days + ' days, ' + core.length + ' things a day, and ' + c.restDays + ' rest days for birthdays and bad weeks.</p>';
+      out += '<div class="rules-peek rise" style="--i:3"><ul>' +
+        core.map(function (t) { return '<li>' + escapeHtml(t.label) + '</li>'; }).join('') +
+        extra.map(function (t) { return '<li class="b">' + escapeHtml(t.label) + ' — bonus</li>'; }).join('') + '</ul></div>';
+      out += '<div class="field rise" style="--i:4"><label for="gate-name">Your name</label>' +
+        '<input class="input" id="gate-name" placeholder="Nazia" autocomplete="given-name"></div>';
+      out += '<div class="field rise" style="--i:5"><label>Your nutrition plan</label>' + planChips(gatePlan, 'gate-plan') +
+        '<input class="input" id="gate-plan-custom" placeholder="Or describe your own" value="' +
+        (PLANS.indexOf(gatePlan) === -1 ? escapeHtml(gatePlan) : '') + '">' +
+        '<span class="hint">This is what your daily nutrition checkmark is about. Everyone picks their own.</span></div>';
+      out += '<button class="btn primary block rise" data-act="join" style="--i:6;margin-top:15px">Start day 1</button>';
+      out += '<p class="footer-note rise" style="--i:7">Day count, rules and rest days are all editable once you are in.</p>';
+    } else {
+      out += '<p class="gate-sub rise" style="--i:2">Tap your name to pick up where you left off.</p><div class="who">';
+      state.members.forEach(function (m, i) {
+        var st = stats(state, m);
+        out += '<button class="who-btn rise" style="--i:' + (3 + i) + '" data-act="iam" data-id="' + escapeHtml(m.id) + '">' +
+          '<span class="av" style="background:' + escapeHtml(m.color) + '">' + escapeHtml(initials(m.name)) + '</span>' +
+          '<span style="flex:1;min-width:0"><span class="mate-name">' + escapeHtml(m.name) + '</span>' +
+          '<span class="who-sub">Day ' + st.current + ' / ' + st.total + ' · ' + st.done + ' done</span></span></button>';
+      });
+      out += '</div><div class="field"><label for="gate-name">Not on the list?</label>' +
+        '<div class="inline"><input class="input" id="gate-name" placeholder="Your name">' +
+        '<button class="btn" data-act="join">Join</button></div>' +
+        '<span class="hint">Pick your nutrition plan in Settings straight after.</span></div>';
+    }
+    return out + '</div>';
+  }
+
+  /* ---------------- today ---------------- */
+
+  function viewToday() {
+    var m = member(me), c = state.challenge, st = stats(state, m);
+    var today = todayKey();
+    var log = doneOn(state, me, today);
+    var complete = dayComplete(state, me, today);
+    var resting = isRest(state, me, today) && !complete;
+    var out = '';
+
+    var heroCls = 'hero rise' + (complete ? ' is-done' : '') + (resting ? ' is-rest' : '') +
+      (st.notStarted || st.finished ? ' is-over' : '');
+    var pill = st.finished ? '<span class="pill go">Finished</span>'
+      : complete ? '<span class="pill go">Day complete</span>'
+      : resting ? '<span class="pill rest">Rest day</span>'
+      : log.length ? '<span class="pill part">In progress</span>'
+      : '<span class="pill flat">Not started</span>';
+
+    out += '<section class="' + heroCls + '" style="--i:0">';
+    out += '<div class="hero-head"><div><div class="eyebrow">' + (st.finished ? 'You made it' : 'Day') + '</div>' +
+      '<div class="hero-num"><span class="daynum">' + (st.finished ? st.total : st.current) + '</span>' +
+      '<span class="day-of">/ ' + st.total + '</span></div></div>' +
+      '<div style="text-align:right"><div class="hero-date">' + escapeHtml(prettyDate(today)) + '</div>' + pill + '</div></div>';
+    out += '<div class="chain-wrap"><div class="chain">' + chainTicks(m, st) + '</div>' +
+      '<div class="chain-legend"><span class="eyebrow mute">Day 1</span>' +
+      '<span class="eyebrow mute">' + st.done + ' done · ' + st.missed + ' missed</span>' +
+      '<span class="eyebrow mute">Day ' + st.total + '</span></div></div></section>';
+
+    out += '<div class="kpi rise" style="--i:1">' +
+      '<div class="k go"><div class="kn">' + st.done + '</div><div class="kd">of ' + st.total + '</div><div class="kl">Done</div></div>' +
+      '<div class="k"><div class="kn">' + st.streak + '</div><div class="kd">days</div><div class="kl">Streak</div></div>' +
+      '<div class="k bonus"><div class="kn">' + st.bonus + '</div><div class="kd">extra</div><div class="kl">Bonus</div></div>' +
+      '<div class="k rest"><div class="kn">' + st.restLeft + '</div><div class="kd">of ' + c.restDays + '</div><div class="kl">Rest left</div></div>' +
+      '</div>';
+
+    if (st.finished) {
+      out += '<div class="note rise" style="--i:2"><b>' + st.done + ' of ' + st.total + ' days done.</b> ' +
+        'Start another round from Settings, or leave the board up as a receipt.</div>';
+    }
+    if (resting) {
+      out += '<div class="note calm rise" style="--i:2"><b>Today is booked off.</b> ' +
+        'It will not count against you and it will not break your streak. Do the work anyway and you get the rest day back.</div>';
+    }
+
+    var core = c.tasks.filter(function (t) { return t.required; });
+    var extra = c.tasks.filter(function (t) { return !t.required; });
+    if (core.length) {
+      out += '<div class="group-label rise" style="--i:3">Every day <span class="n">' +
+        core.filter(function (t) { return log.indexOf(t.id) !== -1; }).length + '/' + core.length + '</span></div>';
+      out += '<div class="tasks">' + core.map(function (t, i) { return taskRow(t, log, today, m, i + 4); }).join('') + '</div>';
+    }
+    if (extra.length) {
+      out += '<div class="group-label rise" style="--i:' + (core.length + 4) + '">Go harder <span class="n">' +
+        extra.filter(function (t) { return log.indexOf(t.id) !== -1; }).length + '/' + extra.length + '</span></div>';
+      out += '<div class="tasks">' + extra.map(function (t, i) { return taskRow(t, log, today, m, core.length + 5 + i); }).join('') + '</div>';
+    }
+    popId = null;
+
+    var mins = minutesOn(state, me, today);
+    var sess = workoutsOn(state, me, today).length;
+    out += '<div class="group-label">Training today <span class="n">' + mins + ' min</span></div>';
+    out += '<button class="btn block" data-act="tab" data-tab="train">' +
+      (sess ? sess + ' ' + plural(sess, 'session', 'sessions') + ' logged · open the log' : 'Log a workout') + '</button>';
+
+    if (!st.finished && !st.notStarted) {
+      out += '<div style="margin-top:8px">';
+      if (resting) {
+        out += '<button class="btn block rest" data-act="unrest" data-date="' + today + '"' + (mode === 'readonly' ? ' disabled' : '') +
+          '>Actually, I am doing today</button>';
+      } else if (!complete) {
+        out += '<button class="btn block rest" data-act="rest" data-date="' + today + '"' +
+          (mode === 'readonly' || st.restLeft <= 0 ? ' disabled' : '') + '>' +
+          (st.restLeft > 0 ? 'Take today off · ' + st.restLeft + ' ' + plural(st.restLeft, 'rest day', 'rest days') + ' left' : 'No rest days left') +
+          '</button>';
+      }
+      out += '</div>';
+    }
+
+    if (st.blown) {
+      out += '<div class="note alert"><b>' + st.missed + ' missed ' + plural(st.missed, 'day', 'days') +
+        ', past your allowance of ' + c.reset.allowance + '.</b> Restart from today in Settings, or raise the allowance.</div>';
+    } else if (st.restLeft === 0 && !resting && !st.finished) {
+      out += '<div class="note"><b>No rest days left.</b> From here, a skipped day counts as missed.</div>';
+    }
+    if (mode === 'readonly') {
+      out += '<div class="note alert"><b>This board is read only for you.</b> ' +
+        'Ask whoever set it up to reshare the link with edit access, then your check-ins will save for everyone.</div>';
+    }
+    return out;
+  }
+
+  function taskRow(t, log, dateKey, m, idx) {
+    var on = log.indexOf(t.id) !== -1;
+    var det = taskDetail(t, m);
+    return '<button class="task rise' + (t.required ? '' : ' bonus') + (on ? ' on' : '') + (popId === t.id ? ' pop' : '') +
+      '" style="--i:' + idx + '"' + (mode === 'readonly' ? ' disabled' : '') +
+      ' data-act="toggle" data-task="' + escapeHtml(t.id) + '" data-date="' + dateKey + '">' +
+      '<span class="box">' + ICONS.check + '</span><span class="task-body">' +
+      '<span class="task-label">' + escapeHtml(t.label) +
+      (t.required ? '' : '<span class="tag">Bonus</span>') +
+      (t.auto ? '<span class="tag auto">Auto</span>' : '') + '</span>' +
+      (det.text ? '<span class="task-detail' + (det.plan ? ' plan' : '') + '">' + escapeHtml(det.text) + '</span>' : '') +
+      '</span></button>';
+  }
+
+  function chainTicks(m, st) {
+    var out = '';
+    for (var i = 1; i <= st.total; i++) {
+      var k = keyForDay(m, i), cls = 'tick';
+      if (i <= st.dayIndex) {
+        if (dayComplete(state, m.id, k)) cls += ' done';
+        else if (isRest(state, m.id, k)) cls += ' rest';
+        else if (dayTouched(state, m.id, k)) cls += ' part';
+        else if (i < st.dayIndex) cls += ' miss';
+      }
+      if (i === st.dayIndex) cls += ' today';
+      out += '<span class="' + cls + '"></span>';
+    }
+    return out;
+  }
+
+  /* ---------------- training ---------------- */
+
+  function viewTrain() {
+    var m = member(me), c = state.challenge, st = stats(state, m);
+    var today = todayKey();
+    var target = c.workoutTarget || 45;
+    var out = '';
+
+    out += '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">Training</div>' +
+      '<div class="h-sec">' + fmt(st.mins) + ' minutes logged</div></div></div>';
+
+    out += '<div class="kpi three rise" style="--i:1">' +
+      '<div class="k"><div class="kn">' + st.sessions + '</div><div class="kd">' + plural(st.sessions, 'session', 'sessions') + '</div><div class="kl">Logged</div></div>' +
+      '<div class="k"><div class="kn">' + fmt(st.kcal) + '</div><div class="kd">kcal</div><div class="kl">Burned</div></div>' +
+      '<div class="k"><div class="kn">' + (st.avgHr || '—') + '</div><div class="kd">bpm</div><div class="kl">Avg HR</div></div>' +
+      '</div>';
+
+    out += minutesChart(m, st, target);
+
+    /* log form */
+    out += '<div class="group-label rise" style="--i:3">Log a session</div>';
+    out += woEntryForm(today, true);
+
+    out += '<div class="field"><label for="wo-paste">From a screenshot</label>' +
+      '<ol class="steps"><li>Screenshot the workout in Ultrahuman, Fitness, whatever.</li>' +
+      '<li>Open it in <b>Photos</b> and press and hold the text.</li>' +
+      '<li><b>Select All</b>, then <b>Copy</b>.</li>' +
+      '<li>Paste below and hit the button.</li></ol>' +
+      '<textarea class="input" id="wo-paste" placeholder="Paste the copied text here"></textarea>' +
+      '<button class="btn ghost block" data-act="wo-parse">Pull out the numbers</button>' +
+      '<span class="hint">iPhone can lift text straight out of a picture, so an app having no copy button does not matter. ' +
+      'This page cannot look at the image itself — it has no way to see one — but it reads the text fine, ' +
+      'and it knows to take your <b>average</b> heart rate rather than your max.</span></div>';
+
+    /* today's sessions */
+    var todays = workoutsOn(state, me, today);
+    out += '<div class="group-label">Today <span class="n">' + minutesOn(state, me, today) + ' min</span></div>';
+    if (!todays.length) out += '<p class="footer-note left">Nothing logged today yet.</p>';
+    todays.forEach(function (w) {
+      out += '<div class="wo-row"><span class="wo-type">' + escapeHtml(w.type) + '</span>' +
+        '<span class="wo-main">' + w.min + ' min' +
+        '<span class="wo-sub">' + (w.kcal ? fmt(w.kcal) + ' kcal' : 'no kcal') + (w.hr ? ' · ' + w.hr + ' bpm' : '') + '</span></span>' +
+        '<button class="xbtn" data-act="wo-del" data-date="' + today + '" data-id="' + escapeHtml(w.id) + '" aria-label="Remove session">' + ICONS.x + '</button></div>';
+    });
+
+    out += '<div class="rule"></div>';
+    out += '<p class="footer-note left">Logging a session ticks the workout boxes for you: <b>' + target +
+      ' minutes</b> ticks the daily workout, <b>' + (target * 2) + ' minutes</b> also ticks the bonus second session. ' +
+      'Change the target in Settings.</p>';
+    return out;
+  }
+
+  // One entry form, used by the Train tab and by any past day on the Card.
+  function woEntryForm(dateKey, primary) {
+    var f = woForm || {};
+    var out = '<input class="input" id="wo-type" placeholder="Activity — Pilates, Run, Lift…" value="' +
+      escapeHtml(f.type || '') + '">';
+    out += '<div class="chips" style="margin-top:7px">' + WO_QUICK.map(function (t) {
+      return '<button class="pick' + (f.type === t ? ' on' : '') + '" data-act="wo-type" data-type="' + t + '">' + t + '</button>';
+    }).join('') + '</div>';
+    out += '<div class="grid3" style="margin-top:8px">' +
+      '<input class="input" id="wo-min" type="number" inputmode="numeric" min="0" max="600" placeholder="Minutes" value="' + (f.min || '') + '">' +
+      '<input class="input" id="wo-kcal" type="number" inputmode="numeric" min="0" max="5000" placeholder="kcal" value="' + (f.kcal || '') + '">' +
+      '<input class="input" id="wo-hr" type="number" inputmode="numeric" min="0" max="250" placeholder="Avg HR" value="' + (f.hr || '') + '">' +
+      '</div>';
+    out += '<button class="btn ' + (primary ? 'primary ' : '') + 'block" data-act="wo-add" data-date="' + dateKey + '" style="margin-top:8px"' +
+      (mode === 'readonly' ? ' disabled' : '') + '>' + (primary ? 'Add to today' : 'Add a session') + '</button>';
+    return out;
+  }
+
+  // Minutes per day. One series, so no legend — the title names it.
+  function minutesChart(m, st, target) {
+    var days = Math.max(Math.min(st.dayIndex, st.total), 1);
+    var vals = [];
+    for (var i = 1; i <= days; i++) vals.push(minutesOn(state, m.id, keyForDay(m, i)));
+    var max = Math.max(target * 1.6, Math.max.apply(null, vals.concat([1])));
+    var sel = selBar && selBar <= days ? selBar : null;
+    var readout = sel
+      ? 'Day ' + sel + ' · ' + vals[sel - 1] + ' min'
+      : (st.sessions ? 'Avg ' + Math.round(st.mins / days) + ' min/day' : 'Nothing logged yet');
+
+    var out = '<div class="chart rise" style="--i:2"><div class="chart-head">' +
+      '<span class="chart-title">Minutes per day</span>' +
+      '<span class="chart-read" id="chart-read">' + escapeHtml(readout) + '</span></div>';
+    out += '<div class="plot">';
+    out += '<div class="plot-target" style="bottom:' + (100 * target / max).toFixed(2) + '%"><span>' + target + ' min</span></div>';
+    for (var j = 0; j < days; j++) {
+      var v = vals[j];
+      var h = v > 0 ? Math.max(3, 100 * v / max) : 0;
+      out += '<button class="bar' + (v >= target ? ' hit' : '') + (v === 0 ? ' zero' : '') + (sel === j + 1 ? ' sel' : '') +
+        '" data-act="bar" data-day="' + (j + 1) + '" aria-label="Day ' + (j + 1) + ', ' + v + ' minutes">' +
+        '<i style="height:' + h.toFixed(2) + '%"></i></button>';
+    }
+    out += '</div><div class="plot-axis"><span>Day 1</span><span>Day ' + days + '</span></div></div>';
+    return out;
+  }
+
+  /* ---------------- squad ---------------- */
+
+  /* Superlatives. Only awarded on a strict win, so a tie hands out nothing
+     and the chips stay worth having. */
+  function awards(ranked) {
+    var out = {};
+    function push(id, cls, label) { (out[id] = out[id] || []).push('<span class="award ' + cls + '">' + label + '</span>'); }
+    function best(get) {
+      var sorted = ranked.slice().sort(function (a, b) { return get(b) - get(a); });
+      if (!sorted.length || get(sorted[0]) <= 0) return null;
+      if (sorted.length > 1 && get(sorted[1]) === get(sorted[0])) return null;   // tie: nobody
+      return sorted[0];
+    }
+    var l = best(function (r) { return r.s.done; });
+    if (l) push(l.m.id, 'lead', 'Leader');
+    var st = best(function (r) { return r.s.streak; });
+    if (st && st.s.streak > 1) push(st.m.id, 'streak', st.s.streak + ' day streak');
+    var bo = best(function (r) { return r.s.bonus; });
+    if (bo) push(bo.m.id, 'bonus', 'Most bonus');
+    var mi = best(function (r) { return r.s.mins; });
+    if (mi) push(mi.m.id, 'mins', fmt(mi.s.mins) + ' min');
+    ranked.forEach(function (r) {
+      if (r.s.missed === 0 && r.s.done > 0 && r.s.dayIndex > 2) push(r.m.id, 'perfect', 'Not one missed');
+    });
+    return out;
+  }
+
+  function standings() {
+    return state.members.map(function (m) { return { m: m, s: stats(state, m) }; })
+      .sort(function (a, b) {
+        if (b.s.done !== a.s.done) return b.s.done - a.s.done;
+        if (b.s.streak !== a.s.streak) return b.s.streak - a.s.streak;
+        if (b.s.bonus !== a.s.bonus) return b.s.bonus - a.s.bonus;
+        return a.m.name.localeCompare(b.m.name);
+      });
+  }
+
+  // Standings as text, for pasting into the group chat.
+  function standingsText() {
+    var ranked = standings();
+    var today = todayKey();
+    var lines = [state.challenge.name.toUpperCase()];
+    ranked.forEach(function (r, i) {
+      var mark = isRest(state, r.m.id, today) && !dayComplete(state, r.m.id, today) ? 'resting'
+        : dayComplete(state, r.m.id, today) ? 'done today'
+        : dayTouched(state, r.m.id, today) ? 'part way'
+        : 'not in yet';
+      lines.push((i + 1) + '. ' + r.m.name + ' — day ' + r.s.current + ', ' + r.s.done + ' done' +
+        (r.s.streak > 1 ? ', ' + r.s.streak + ' streak' : '') +
+        (r.s.bonus ? ', +' + r.s.bonus + ' bonus' : '') + ' (' + mark + ')');
+    });
+    var slack = ranked.filter(function (r) {
+      return !dayTouched(state, r.m.id, today) && !isRest(state, r.m.id, today);
+    }).map(function (r) { return r.m.name; });
+    if (slack.length) lines.push('', 'Still owing today: ' + slack.join(', '));
+    return lines.join('\n');
+  }
+
+  function viewSquad() {
+    var today = todayKey();
+    var ranked = standings();
+    var aw = awards(ranked);
+    var checkedIn = ranked.filter(function (r) { return dayTouched(state, r.m.id, today); }).length;
+    var total = state.challenge.days;
+
+    var out = '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">The squad</div>' +
+      '<div class="h-sec">' + checkedIn + ' of ' + ranked.length + ' in today</div></div></div>';
+
+    /* roll call — who has shown up, who has not */
+    out += '<div class="roll rise" style="--i:1">' + ranked.map(function (r) {
+      var resting = isRest(state, r.m.id, today) && !dayComplete(state, r.m.id, today);
+      var inToday = dayTouched(state, r.m.id, today);
+      var cls = resting ? 'rest' : (inToday ? 'in' : '');
+      return '<span class="roll-chip ' + cls + '">' +
+        '<span class="roll-av" style="background:' + escapeHtml(r.m.color) + '">' + escapeHtml(initials(r.m.name)) + '</span>' +
+        '<span class="roll-name">' + escapeHtml(r.m.name) + '</span></span>';
+    }).join('') + '</div>';
+
+    /* the race — one lane each, finish line at the last day */
+    out += '<div class="rule" style="margin-top:22px"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">The race to day ' + total + '</div>';
+    out += '<div class="race rise" style="--i:2">' + ranked.map(function (r, i) {
+      var pct = total ? Math.min(100, 100 * r.s.done / total) : 0;
+      var lead = i === 0 && r.s.done > 0;
+      return '<div class="lane">' +
+        '<span class="lane-av" style="background:' + escapeHtml(r.m.color) + '">' + escapeHtml(initials(r.m.name)) + '</span>' +
+        '<span class="lane-track' + (lead ? ' lead' : '') + '">' +
+        '<i style="width:' + pct.toFixed(1) + '%;background:' + escapeHtml(r.m.color) + '"></i></span>' +
+        '<span class="lane-n' + (lead ? ' lead' : '') + '">' + r.s.done + '</span></div>';
+    }).join('') + '</div>';
+    out += '<div class="race-foot"><span class="eyebrow mute">Day 1</span>' +
+      '<span class="eyebrow mute">Finish · day ' + total + '</span></div>';
+
+    /* standings */
+    out += '<div class="rule"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">Standings</div>';
+    out += '<div class="squad" style="margin-top:11px">';
+    ranked.forEach(function (r, i) {
+      var inToday = dayTouched(state, r.m.id, today);
+      var restToday = isRest(state, r.m.id, today) && !dayComplete(state, r.m.id, today);
+      var tag = restToday ? '<span class="today-tag rest">Rest</span>'
+        : inToday ? '<span class="today-tag in">In</span>'
+        : '<span class="today-tag">' + (r.s.streak > 0 ? r.s.streak + ' streak' : 'not yet') + '</span>';
+      out += '<div class="mate rise' + (r.m.id === me ? ' me' : '') + '" style="--i:' + (i + 3) + '">' +
+        '<span class="rank">' + (i + 1) + '</span>' +
+        '<span class="av" style="background:' + escapeHtml(r.m.color) + '">' + escapeHtml(initials(r.m.name)) + '</span>' +
+        '<span class="mate-body"><span class="mate-name">' + escapeHtml(r.m.name) +
+        (r.m.id === me ? '<span class="you-tag">You</span>' : '') + '</span>' +
+        '<span class="mate-plan">' + escapeHtml(r.m.plan || 'no plan set') +
+        (r.s.mins ? ' · ' + fmt(r.s.mins) + ' min' : '') + '</span>' +
+        (aw[r.m.id] ? '<span class="awards">' + aw[r.m.id].join('') + '</span>' : '') +
+        '<span class="mini">' + miniChain(r.m, r.s) + '</span></span>' +
+        '<span class="mate-right"><span class="mate-day">' + r.s.done + '</span>' +
+        (r.s.bonus ? '<span class="bonus-badge">+' + r.s.bonus + '</span>' : '') + tag + '</span></div>';
+    });
+    out += '</div><div class="key">' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--go)"></span>Complete</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--go-dim)"></span>Partial</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--rest)"></span>Rest</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--miss)"></span>Missed</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--bonus)"></span>Bonus</span></div>';
+
+    /* callout for the group chat */
+    out += '<div class="rule"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">Call them out</div>';
+    out += '<button class="btn block" data-act="copy-standings" style="margin-top:11px">Copy the standings</button>';
+    if (copyBox) {
+      out += '<textarea class="copybox" id="copy-out" readonly>' + escapeHtml(standingsText()) + '</textarea>' +
+        '<p class="footer-note left">' + (copyBox === 'copied'
+          ? 'Copied. Paste it in the group chat.'
+          : 'Could not reach the clipboard here — select this and copy it by hand.') + '</p>';
+    }
+
+    /* the link IS the credential -- this is how the squad gets in */
+    out += '<div class="rule"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">Invite the squad</div>';
+    if (mode === 'cloud') {
+      out += '<div class="kpi three" style="grid-template-columns:1fr;margin-top:11px">' +
+        '<div class="k"><div class="kn" style="font-family:var(--mono);font-size:19px;letter-spacing:.06em">' +
+        escapeHtml(boardId) + '</div><div class="kl">Board code — everyone needs this one</div></div></div>';
+      out += '<button class="btn primary block" data-act="copy-link" style="margin-top:9px">Copy the board link</button>';
+      if (linkBox) {
+        out += '<textarea class="copybox" id="link-out" readonly>' + escapeHtml(boardLink()) + '</textarea>';
+      }
+      out += '<p class="footer-note left">Send the <b>whole link</b>, ending in <b>#' + escapeHtml('b=' + boardId) + '</b>. ' +
+        'If it arrives without that bit, they can type the code above instead. Opening the plain address puts them on a ' +
+        'board of their own, which is the one way to end up unable to see each other.</p>';
+    } else {
+      out += '<p class="footer-note left">Not connected to the shared board, so this device is tracking on its own. ' +
+        'Check your connection and reopen — nothing you have logged is lost.</p>';
+    }
+
+    out += '<div class="rule"></div><div class="field"><label for="add-mate">Add someone</label>' +
+      '<div class="inline"><input class="input" id="add-mate" placeholder="Their name"' + (mode === 'readonly' ? ' disabled' : '') + '>' +
+      '<button class="btn" data-act="add-mate"' + (mode === 'readonly' ? ' disabled' : '') + '>Add</button></div></div>';
+    out += '<p class="footer-note">' + (mode === 'shared'
+      ? 'Everyone opening this link sees the same board, picks their own name and their own nutrition plan.'
+      : 'This copy saves to this phone only, so anyone you add here is yours to tick off.') + '</p>';
+    return out;
+  }
+
+  function miniChain(m, st) {
+    var out = '';
+    for (var i = 1; i <= st.total; i++) {
+      var k = keyForDay(m, i), cls = '';
+      if (i <= st.dayIndex) {
+        if (dayComplete(state, m.id, k)) cls = 'done';
+        else if (isRest(state, m.id, k)) cls = 'rest';
+        else if (dayTouched(state, m.id, k)) cls = 'part';
+        else if (i < st.dayIndex) cls = 'miss';
+      }
+      out += '<span class="' + cls + '"></span>';
+    }
+    return out;
+  }
+
+  /* ---------------- the card ---------------- */
+
+  function viewGrid() {
+    var m = member(me), st = stats(state, m);
+    var out = '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">The card</div>' +
+      '<div class="h-sec">' + st.done + ' of ' + st.total + ' punched</div></div></div><div class="grid rise" style="--i:1">';
+    for (var i = 1; i <= st.total; i++) {
+      var k = keyForDay(m, i), cls = 'cell', mark = '';
+      if (i > st.dayIndex) cls += ' future';
+      else if (dayComplete(state, m.id, k)) { cls += ' done'; mark = CHECK_SM; }
+      else if (isRest(state, m.id, k)) { cls += ' rest'; mark = '&ndash;'; }
+      else if (dayTouched(state, m.id, k)) { cls += ' part'; mark = String(doneOn(state, m.id, k).length); }
+      else if (i < st.dayIndex) { cls += ' miss'; mark = '&times;'; }
+      if (i === st.dayIndex) cls += ' today';
+      out += '<button class="' + cls + '" data-act="open-day" data-day="' + i + '" aria-label="Day ' + i + '">' +
+        '<span class="n">' + i + '</span>' + (bonusOn(state, m.id, k) ? '<span class="b"></span>' : '') +
+        (mark ? '<span class="m">' + mark + '</span>' : '') + '</button>';
+    }
+    out += '</div><div class="key">' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--go)"></span>Complete</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--go-dim)"></span>Partial</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--rest)"></span>Rest</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--miss)"></span>Missed</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--bonus)"></span>Bonus</span></div>';
+    if (openDay) out += viewDaySheet(m, openDay, st);
+    else out += '<p class="footer-note">Tap any day to fill it in, or to book it off.</p>';
+    return out;
+  }
+
+  function viewDaySheet(m, n, st) {
+    var k = keyForDay(m, n);
+    var log = doneOn(state, m.id, k);
+    var resting = isRest(state, m.id, k);
+    var out = '<div class="rule"></div>';
+    out += '<div class="section-head"><div><div class="eyebrow">' + escapeHtml(prettyDate(k)) + '</div>' +
+      '<div class="h-sec">Day ' + n + '</div></div><button class="btn sm" data-act="close-day">Close</button></div>';
+    out += '<div class="tasks">' + state.challenge.tasks.map(function (t, i) { return taskRow(t, log, k, m, i); }).join('') + '</div>';
+
+    var ws = workoutsOn(state, m.id, k);
+    out += '<div class="group-label">Training <span class="n">' + minutesOn(state, m.id, k) + ' min</span></div>';
+    ws.forEach(function (w) {
+      out += '<div class="wo-row"><span class="wo-type">' + escapeHtml(w.type) + '</span>' +
+        '<span class="wo-main">' + w.min + ' min<span class="wo-sub">' +
+        (w.kcal ? fmt(w.kcal) + ' kcal' : 'no kcal') + (w.hr ? ' · ' + w.hr + ' bpm' : '') + '</span></span>' +
+        '<button class="xbtn" data-act="wo-del" data-date="' + k + '" data-id="' + escapeHtml(w.id) + '" aria-label="Remove session">' + ICONS.x + '</button></div>';
+    });
+    out += woEntryForm(k, false);
+
+    out += '<div style="margin-top:8px"><button class="btn block rest" data-act="' + (resting ? 'unrest' : 'rest') +
+      '" data-date="' + k + '"' + (mode === 'readonly' || (!resting && st.restLeft <= 0) ? ' disabled' : '') + '>' +
+      (resting ? 'Unbook this rest day' : (st.restLeft > 0 ? 'Book this day off' : 'No rest days left')) + '</button></div>';
+    return out;
+  }
+
+  /* ---------------- settings ---------------- */
+
+  function viewSettings() {
+    var c = state.challenge, m = member(me);
+    var out = '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">Settings</div>' +
+      '<div class="h-sec">Your rules</div></div><button class="btn sm" data-act="tab" data-tab="today">Done</button></div>';
+
+    out += '<div class="field"><label for="f-name">Challenge name</label>' +
+      '<input class="input" id="f-name" data-field="name" value="' + escapeHtml(c.name) + '"></div>';
+    out += '<div class="field"><label for="f-days">How many days</label>' +
+      '<input class="input" id="f-days" data-field="days" type="number" inputmode="numeric" min="1" max="365" value="' + c.days + '"></div>';
+    out += '<div class="field"><label for="f-start">Your day 1</label>' +
+      '<input class="input" id="f-start" data-field="startDate" type="date" value="' + escapeHtml(m.startDate) + '">' +
+      '<span class="hint">Everyone counts from their own start date, so friends can join late without wrecking the board.</span></div>';
+    out += '<div class="field"><label for="f-wt">Workout target (minutes)</label>' +
+      '<input class="input" id="f-wt" data-field="workoutTarget" type="number" inputmode="numeric" min="5" max="240" value="' + c.workoutTarget + '">' +
+      '<span class="hint">Logging this many minutes ticks the daily workout. Double it also ticks the bonus second session.</span></div>';
+
+    out += '<div class="rule"></div><div class="pill-label" style="margin-top:16px">Your nutrition plan</div>';
+    out += '<div style="margin-top:11px">' + planChips(m.plan, 'set-plan') + '</div>';
+    out += '<input class="input" data-mate-field="plan" data-id="' + escapeHtml(m.id) + '" style="margin-top:8px" placeholder="Or describe your own" value="' +
+      (PLANS.indexOf(m.plan) === -1 ? escapeHtml(m.plan) : '') + '">';
+    out += '<p class="footer-note left">Shows under your daily nutrition checkmark, and next to your name on the squad board.</p>';
+
+    out += '<div class="rule"></div><div class="section-head"><div class="pill-label">The daily list</div>' +
+      '<button class="btn sm ghost" data-act="add-task">Add a task</button></div>';
+    c.tasks.forEach(function (t) {
+      out += '<div class="editrow"><div class="grow">' +
+        '<input class="input" data-task-field="label" data-task="' + escapeHtml(t.id) + '" value="' + escapeHtml(t.label) + '" placeholder="What you have to do">' +
+        '<input class="input small" data-task-field="detail" data-task="' + escapeHtml(t.id) + '" value="' + escapeHtml(t.detail || '') + '" placeholder="A note to yourself (optional)">' +
+        '</div><div class="stack" style="gap:6px;align-items:flex-end">' +
+        '<button class="reqtoggle ' + (t.required ? 'core' : 'bonus') + '" data-act="req" data-task="' + escapeHtml(t.id) + '">' +
+        (t.required ? 'Every day' : 'Bonus') + '</button>' +
+        '<button class="xbtn" data-act="del-task" data-task="' + escapeHtml(t.id) + '" aria-label="Remove task">' + ICONS.x + '</button>' +
+        '</div></div>';
+    });
+    out += '<p class="footer-note left">A day counts as complete when every <b>every day</b> task is ticked. ' +
+      '<b>Bonus</b> tasks never block a day — they stack a score instead. Tasks marked <b>Auto</b> tick themselves from your training log.</p>';
+
+    out += '<div class="rule"></div><div class="pill-label" style="margin-top:16px">Taking a break</div>';
+    out += '<div class="field"><label for="f-rest">Rest days for the whole challenge</label>' +
+      '<input class="input" id="f-rest" data-field="restDays" type="number" inputmode="numeric" min="0" max="60" value="' + c.restDays + '">' +
+      '<span class="hint">Days you book off on purpose — birthdays, holidays, bad weeks. Not missed, streak survives, refunded if you do the work anyway.</span></div>';
+    out += '<div class="field"><label for="f-reset">Days you miss without booking off</label>' +
+      '<select class="input" id="f-reset" data-field="reset">' +
+      '<option value="off"' + (!c.reset.enabled ? ' selected' : '') + '>Nothing resets — just keep tracking</option>' +
+      '<option value="0"' + (c.reset.enabled && c.reset.allowance === 0 ? ' selected' : '') + '>Strict — one miss and you restart</option>' +
+      '<option value="3"' + (c.reset.enabled && c.reset.allowance === 3 ? ' selected' : '') + '>3 misses allowed</option>' +
+      '<option value="5"' + (c.reset.enabled && c.reset.allowance === 5 ? ' selected' : '') + '>5 misses allowed</option>' +
+      '<option value="10"' + (c.reset.enabled && c.reset.allowance === 10 ? ' selected' : '') + '>10 misses allowed</option></select></div>';
+
+    out += '<div class="rule"></div><div class="pill-label" style="margin-top:16px">Everyone on the board</div>';
+    state.members.forEach(function (mm) {
+      out += '<div class="editrow" style="align-items:center">' +
+        '<span class="av" style="background:' + escapeHtml(mm.color) + '">' + escapeHtml(initials(mm.name)) + '</span>' +
+        '<div class="grow"><input class="input" data-mate-field="name" data-id="' + escapeHtml(mm.id) + '" value="' + escapeHtml(mm.name) + '"></div>' +
+        (mm.id === me ? '<span class="chip">You</span>' : '<button class="btn sm" data-act="iam" data-id="' + escapeHtml(mm.id) + '">This is me</button>') +
+        '<button class="xbtn" data-act="del-mate" data-id="' + escapeHtml(mm.id) + '" aria-label="Remove person">' + ICONS.x + '</button></div>';
+    });
+
+    out += '<div class="rule"></div><div class="pill-label" style="margin-top:16px">Start over</div>';
+    out += '<button class="btn danger block" data-act="restart" style="margin-top:11px">Restart me from today</button>';
+    out += '<p class="footer-note left">Sets your day 1 to today and clears your ticks, rest days and training log. Nobody else is touched.</p>';
+    out += '<p class="footer-note">' + (mode === 'shared' ? 'Saved for the whole squad the moment you stop typing.' : 'Saved to this phone only.') + '</p>';
+    return out;
+  }
+
+  /* ---------------- shell ---------------- */
+
+  function viewShell(inner) {
+    var c = state.challenge;
+    var out = '<div class="app"><header class="topbar">' +
+      '<div class="brand"><span class="brand-mark">H</span><span class="brand-name">' + escapeHtml(c.name) + '</span></div>' +
+      '<div class="topbar-actions">' +
+      '<button class="chip" id="status-chip" data-state="' + status + '" data-act="save-now">' + statusLabel(status) + '</button>' +
+      '<button class="icon-btn" data-act="tab" data-tab="settings" aria-label="Settings">' + ICONS.gear + '</button>' +
+      '</div></header><main>' + inner + '</main></div>';
+    if (tab !== 'settings') {
+      out += '<nav class="tabbar"><div class="tabbar-inner">' +
+        tabBtn('today', 'Today', ICONS.today) + tabBtn('train', 'Train', ICONS.train) +
+        tabBtn('squad', 'Squad', ICONS.squad) + tabBtn('grid', 'Card', ICONS.grid) + '</div></nav>';
+    }
+    return out;
+  }
+  function tabBtn(id, label, icon) {
+    return '<button class="tab' + (tab === id ? ' on' : '') + '" data-act="tab" data-tab="' + id + '"' +
+      (tab === id ? ' aria-current="page"' : '') + '>' + icon + '<span>' + label + '</span></button>';
+  }
+
+  function render() {
+    var root = document.getElementById('root');
+    if (needBoard) { root.innerHTML = '<div class="app">' + viewChooseBoard() + '</div>'; return; }
+    if (!me || !member(me)) { root.innerHTML = '<div class="app">' + viewGate() + '</div>'; return; }
+    var inner;
+    if (tab === 'train') inner = viewTrain();
+    else if (tab === 'squad') inner = viewSquad();
+    else if (tab === 'grid') inner = viewGrid();
+    else if (tab === 'settings') inner = viewSettings();
+    else inner = viewToday();
+    root.innerHTML = viewShell(inner);
+  }
+
+  /* ---------------- actions ---------------- */
+
+  function addMember(name, plan, makeMe) {
+    name = String(name || '').trim();
+    if (!name) return null;
+    var m = { id: uid('m'), name: name.slice(0, 40), color: COLORS[state.members.length % COLORS.length],
+              startDate: todayKey(), plan: String(plan || '').trim().slice(0, 60) };
+    state.members.push(m);
+    if (makeMe) { me = m.id; try { localStorage.setItem(LS_ME, me); } catch (e) { /* ignore */ } }
+    pushMember(m);
+    return m;
+  }
+  function toggleTask(memberId, dateKey, taskId) {
+    var on = doneOn(state, memberId, dateKey).indexOf(taskId) !== -1;
+    setTick(memberId, dateKey, taskId, !on);
+    pushCheckin(memberId, dateKey);
+  }
+  function setRest(memberId, dateKey, on) {
+    var list = state.rest[memberId] || [];
+    var i = list.indexOf(dateKey);
+    if (on && i === -1) list.push(dateKey);
+    if (!on && i !== -1) list.splice(i, 1);
+    if (list.length) state.rest[memberId] = list; else delete state.rest[memberId];
+    pushRest(memberId, dateKey, on);
+  }
+  function keepScroll(fn) { var y = window.scrollY; fn(); render(); window.scrollTo(0, y); }
+  function readWoInputs() {
+    var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+    var type = String(g('wo-type') || '').trim() || (woForm && woForm.type) || 'Other';
+    return { type: type.slice(0, 24), min: g('wo-min'), kcal: g('wo-kcal'), hr: g('wo-hr') };
+  }
+
+  function onClick(e) {
+    var el = e.target.closest('[data-act]');
+    if (!el || el.disabled) return;
+    var act = el.dataset.act;
+
+    if (act === 'tab') {
+      tab = el.dataset.tab; openDay = null; selBar = null; copyBox = null; linkBox = null;
+      render(); window.scrollTo(0, 0);
+      if (mode === 'cloud') { lastTouch = Date.now(); poll(); }
+      return;
+    }
+
+    if (act === 'gate-plan') {
+      var nameEl = document.getElementById('gate-name');
+      var keep = nameEl ? nameEl.value : '';
+      gatePlan = el.dataset.plan;
+      render();
+      var again = document.getElementById('gate-name');
+      if (again) again.value = keep;
+      return;
+    }
+    if (act === 'join') {
+      var input = document.getElementById('gate-name');
+      var custom = document.getElementById('gate-plan-custom');
+      var plan = (custom && custom.value.trim()) || gatePlan;
+      if (!addMember(input && input.value, plan, true)) { if (input) input.focus(); return; }
+      gatePlan = ''; tab = 'today'; render();
+      return;
+    }
+    if (act === 'set-plan') {
+      var mp = member(me);
+      if (mp) { mp.plan = el.dataset.plan; pushMember(mp); }
+      keepScroll(function () {});
+      return;
+    }
+    if (act === 'iam') {
+      me = el.dataset.id;
+      try { localStorage.setItem(LS_ME, me); } catch (err) { /* ignore */ }
+      tab = 'today'; render();
+      return;
+    }
+    if (act === 'add-mate') {
+      var mi = document.getElementById('add-mate');
+      if (!addMember(mi && mi.value, '', false)) { if (mi) mi.focus(); return; }
+      render();
+      return;
+    }
+    if (act === 'toggle') {
+      popId = el.dataset.task;
+      keepScroll(function () { toggleTask(me, el.dataset.date, el.dataset.task); });
+      return;
+    }
+    if (act === 'rest' || act === 'unrest') {
+      var d = el.dataset.date;
+      keepScroll(function () { setRest(me, d, act === 'rest'); });
+      return;
+    }
+    if (act === 'open-day') { openDay = Number(el.dataset.day); render(); return; }
+    if (act === 'close-day') { openDay = null; render(); return; }
+
+    if (act === 'wo-type') { woForm = Object.assign({}, readWoInputs(), { type: el.dataset.type }); keepScroll(function () {}); return; }
+    if (act === 'wo-add') {
+      var w = readWoInputs();
+      if (!Number(w.min)) { var mn = document.getElementById('wo-min'); if (mn) mn.focus(); return; }
+      var dk = el.dataset.date;
+      keepScroll(function () { addWorkout(me, dk, w); woForm = null; });
+      return;
+    }
+    if (act === 'wo-del') {
+      var dk2 = el.dataset.date, id2 = el.dataset.id;
+      keepScroll(function () { removeWorkout(me, dk2, id2); });
+      return;
+    }
+    if (act === 'wo-parse') {
+      var ta = document.getElementById('wo-paste');
+      var parsed = parseWorkoutText(ta ? ta.value : '');
+      if (!parsed.min && !parsed.kcal && !parsed.hr) {
+        if (ta) { ta.style.borderColor = 'var(--miss)'; ta.placeholder = 'Could not find a duration in that. Type the minutes above instead.'; ta.value = ''; }
+        return;
+      }
+      woForm = { type: parsed.type || 'Other', min: parsed.min || '', kcal: parsed.kcal || '', hr: parsed.hr || '' };
+      keepScroll(function () {});
+      return;
+    }
+    if (act === 'bar') { selBar = Number(el.dataset.day); keepScroll(function () {}); return; }
+
+    if (act === 'req') {
+      var t = state.challenge.tasks.filter(function (x) { return x.id === el.dataset.task; })[0];
+      if (t) { t.required = !t.required; pushChallenge(); keepScroll(function () {}); }
+      return;
+    }
+    if (act === 'add-task') {
+      state.challenge.tasks.push({ id: uid('t'), label: '', detail: '', required: true });
+      pushChallenge(); render();
+      var inputs = document.querySelectorAll('[data-task-field="label"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+      return;
+    }
+    if (act === 'del-task') {
+      state.challenge.tasks = state.challenge.tasks.filter(function (x) { return x.id !== el.dataset.task; });
+      pushChallenge(); keepScroll(function () {});
+      return;
+    }
+    if (act === 'del-mate') {
+      var id = el.dataset.id;
+      state.members = state.members.filter(function (x) { return x.id !== id; });
+      delete state.log[id]; delete state.rest[id]; delete state.workouts[id];
+      if (me === id) { me = null; try { localStorage.removeItem(LS_ME); } catch (err) { /* ignore */ } }
+      dropMember(id); render();
+      return;
+    }
+    if (act === 'restart') {
+      var mm = member(me);
+      if (!mm) return;
+      mm.startDate = todayKey();
+      state.log[me] = {}; delete state.rest[me]; delete state.workouts[me];
+      clearMemberRows(me); pushMember(mm); tab = 'today'; render();
+      return;
+    }
+    if (act === 'new-board') {
+      el.disabled = true;
+      boardId = newSlug();
+      sbFetch('boards', { method: 'POST', body: { id: boardId, challenge: defaultState().challenge } })
+        .then(loadBoard)
+        .then(function (loaded) {
+          if (!loaded) throw new Error('could not create');
+          state = loaded; needBoard = false; joinError = ''; mode = 'cloud';
+          stampHash(); setStatus('saved'); schedulePoll(); render();
+        })
+        .catch(function () { joinError = 'Could not reach the board. Check your connection and try again.'; render(); });
+      return;
+    }
+
+    if (act === 'join-board') {
+      var field = document.getElementById('join-code');
+      var raw = field ? String(field.value).trim() : '';
+      // accept a pasted link or a bare code
+      var code = (raw.match(/b=([A-Za-z0-9_-]{6,40})/) || [])[1] ||
+                 (/^[A-Za-z0-9_-]{6,40}$/.test(raw) ? raw : '');
+      if (!code) { joinError = 'That does not look like a board link or code.'; render(); return; }
+      el.disabled = true;
+      boardId = code;
+      loadBoard().then(function (loaded) {
+        if (!loaded) {
+          joinError = 'No board with the code ' + code + '. Check it with whoever started it.';
+          boardId = null; render(); return;
+        }
+        state = loaded; needBoard = false; joinError = ''; mode = 'cloud';
+        stampHash(); setStatus('saved'); schedulePoll(); render();
+      }).catch(function () {
+        joinError = 'Could not reach the board. Check your connection.';
+        boardId = null; render();
+      });
+      return;
+    }
+
+    if (act === 'copy-link') {
+      var link = boardLink();
+      var show = function (ok) { linkBox = ok ? 'copied' : 'manual'; keepScroll(function () {}); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(function () { show(true); }, function () { show(false); });
+        } else show(false);
+      } catch (err) { show(false); }
+      return;
+    }
+
+    if (act === 'copy-standings') {
+      var txt = standingsText();
+      var done = function (ok) { copyBox = ok ? 'copied' : 'manual'; keepScroll(function () {}); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(false); });
+        } else done(false);
+      } catch (err) { done(false); }
+      return;
+    }
+
+    if (act === 'save-now') {
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      lastTouch = Date.now();
+      poll();
+    }
+  }
+
+  function onInput(e) {
+    var el = e.target;
+    if (el.dataset.field) {
+      var f = el.dataset.field;
+      if (f === 'name') state.challenge.name = el.value.slice(0, 60);
+      else if (f === 'days') { var n = parseInt(el.value, 10); if (n >= 1 && n <= 365) state.challenge.days = n; }
+      else if (f === 'restDays') { var r = parseInt(el.value, 10); if (r >= 0 && r <= 60) state.challenge.restDays = r; }
+      else if (f === 'workoutTarget') { var wt = parseInt(el.value, 10); if (wt >= 5 && wt <= 240) state.challenge.workoutTarget = wt; }
+      else if (f === 'startDate') { var mm = member(me); if (mm && /^\d{4}-\d{2}-\d{2}$/.test(el.value)) mm.startDate = el.value; }
+      else if (f === 'reset') {
+        if (el.value === 'off') state.challenge.reset = { enabled: false, allowance: 0 };
+        else state.challenge.reset = { enabled: true, allowance: parseInt(el.value, 10) };
+      }
+      scheduleSave(1800);
+      return;
+    }
+    if (el.dataset.taskField) {
+      var t = state.challenge.tasks.filter(function (x) { return x.id === el.dataset.task; })[0];
+      if (t) {
+        if (el.dataset.taskField === 'label') t.label = el.value.slice(0, 80);
+        else t.detail = el.value.slice(0, 140);
+        scheduleSave(1800);
+      }
+      return;
+    }
+    if (el.dataset.mateField) {
+      var m2 = member(el.dataset.id);
+      if (m2) {
+        if (el.dataset.mateField === 'name') m2.name = el.value.slice(0, 40);
+        else if (el.dataset.mateField === 'plan') m2.plan = el.value.slice(0, 60);
+        scheduleSave(1800);
+      }
+    }
+  }
+
+  function onKey(e) {
+    if (e.key !== 'Enter') return;
+    var id = e.target.id;
+    if (id === 'join-code') {
+      e.preventDefault();
+      var jb = document.querySelector('[data-act="join-board"]');
+      if (jb) jb.click();
+      return;
+    }
+    if (id === 'gate-name' || id === 'gate-plan-custom' || id === 'add-mate') {
+      e.preventDefault();
+      var btn = document.querySelector(id === 'add-mate' ? '[data-act="add-mate"]' : '[data-act="join"]');
+      if (btn) btn.click();
+    } else if (id === 'wo-min' || id === 'wo-kcal' || id === 'wo-hr' || id === 'wo-type') {
+      e.preventDefault();
+      var add = document.querySelector('[data-act="wo-add"]');
+      if (add) add.click();
+    }
+  }
+
+  /* ---------------- boot ---------------- */
+
+  (async function boot() {
+    await initStorage();
+    setStatus('idle');
+    render();
+    document.addEventListener('click', onClick);
+    document.addEventListener('input', onInput);
+    document.addEventListener('keydown', onKey);
+    // A blur means the user stopped typing — flush without waiting out the debounce.
+    document.addEventListener('focusout', function () { if (saveTimer) scheduleSave(250); });
+    // coming back to the app should show the squad's latest, not a stale board
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && mode === 'cloud') { lastTouch = Date.now(); poll(); }
+    });
+  })();
+})();
+</script>
+</body>
+</html>
