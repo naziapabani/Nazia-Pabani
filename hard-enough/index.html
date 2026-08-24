@@ -301,6 +301,38 @@ body::after{
 .key-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:8.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 .key-sw{width:9px;height:9px;background:var(--track)}
 
+/* ---------------- the race ---------------- */
+.race{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.lane{display:flex;align-items:center;gap:9px}
+.lane-av{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;font-family:var(--display);font-size:12px;color:var(--on-brand)}
+.lane-track{flex:1;min-width:0;height:15px;background:var(--ground-2);border:1px solid var(--rule-soft);position:relative}
+.lane-track i{display:block;height:100%;transition:width .5s cubic-bezier(.22,.9,.3,1)}
+.lane-track.lead::after{content:"";position:absolute;inset:-1px;border:1px solid var(--brand);pointer-events:none}
+.lane-n{font-family:var(--mono);font-size:11px;font-weight:700;width:24px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.lane-n.lead{color:var(--brand)}
+.race-foot{display:flex;justify-content:space-between;margin-top:8px}
+
+/* who is in today */
+.roll{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.roll-chip{display:flex;align-items:center;gap:6px;padding:4px 9px 4px 4px;border:1px solid var(--rule-soft);background:var(--panel)}
+.roll-chip.in{border-color:var(--go)}
+.roll-chip.rest{border-color:var(--rest)}
+.roll-av{width:19px;height:19px;display:grid;place-items:center;font-family:var(--display);font-size:9px;color:var(--on-brand)}
+.roll-name{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.roll-chip.in .roll-name{color:var(--go)}
+.roll-chip.rest .roll-name{color:var(--rest)}
+
+.awards{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.award{font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:2px 5px;border:1px solid currentColor}
+.award.lead{color:var(--brand)}
+.award.streak{color:var(--go)}
+.award.bonus{color:var(--bonus)}
+.award.mins{color:var(--ink-2)}
+.award.perfect{color:var(--go)}
+
+.copybox{width:100%;margin-top:8px;font-family:var(--mono);font-size:11px;line-height:1.6;
+  padding:11px 13px;border:1px solid var(--brand-deep);background:var(--ground-2);color:var(--ink-2);resize:vertical;min-height:96px}
+
 /* ---------------- the card ---------------- */
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .cell{
@@ -423,7 +455,14 @@ select.input{appearance:none}
   var LS_KEY = 'hard-enough:state';
   var LS_ME = 'hard-enough:me';
   var FONTS = 'https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap';
-  var COLORS = ['#82A3CC', '#4BE3AE', '#FFCC4D', '#FF6F61', '#9BB8DE', '#6FD3C7', '#E0A3D6', '#C9D46A'];
+  /* People, not states. Deliberately clear of the status hues (mint/gold/
+     coral/cornflower) so an avatar never reads as "complete" or "missed".
+     With four hues already reserved there is no fully CVD-safe 6-person set
+     -- cyan/pink and lime/amber collapse for deuteranopes whatever the order
+     -- so identity never rests on colour: every member mark carries initials.
+     This set passes normal-vision separation and contrast against the panel. */
+  var COLORS = ['#8B93FF', '#FFB03C', '#2FC8D4', '#FF6FB5', '#A8DE5C'];
+  var OLD_COLORS = /^#(FF4B26|E23A16|0FA873|7442D6|B57B08|C2472F|3D6EA8|0E9975|82A3CC|4BE3AE|FFCC4D|FF6F61|9BB8DE|6FD3C7|E0A3D6|C9D46A)$/i;
 
   var PLANS = ['Whole foods, nothing processed','High protein','Mediterranean','Plant-based','Low carb','Calorie target','Cut out sugar','No alcohol'];
   var WO_QUICK = ['Run','Walk','Lift','Ride','Yoga','Pilates','HIIT','Swim'];
@@ -537,7 +576,7 @@ select.input{appearance:none}
 
   var state = null, mode = 'local', artifactApi = null, me = null, tab = 'today';
   var saveTimer = null, saving = false, retried = false, status = 'idle';
-  var popId = null, openDay = null, gatePlan = '', woForm = null, selBar = null;
+  var popId = null, openDay = null, gatePlan = '', woForm = null, selBar = null, copyBox = null;
 
   function readEmbedded() {
     var el = document.getElementById('app-state');
@@ -559,7 +598,7 @@ select.input{appearance:none}
     if (!s.workouts || typeof s.workouts !== 'object') s.workouts = {};
     s.members.forEach(function (m, i) {
       if (!m.startDate) m.startDate = todayKey();
-      if (!m.color || /^#(FF4B26|E23A16|0FA873|7442D6|B57B08|C2472F|3D6EA8|0E9975)$/i.test(m.color)) m.color = COLORS[i % COLORS.length];
+      if (!m.color || OLD_COLORS.test(m.color)) m.color = COLORS[i % COLORS.length];
       if (typeof m.plan !== 'string') m.plan = '';
     });
     s.v = 3;
@@ -1086,32 +1125,115 @@ select.input{appearance:none}
 
   /* ---------------- squad ---------------- */
 
-  function viewSquad() {
-    var today = todayKey();
-    var ranked = state.members.map(function (m) { return { m: m, s: stats(state, m) }; })
+  /* Superlatives. Only awarded on a strict win, so a tie hands out nothing
+     and the chips stay worth having. */
+  function awards(ranked) {
+    var out = {};
+    function push(id, cls, label) { (out[id] = out[id] || []).push('<span class="award ' + cls + '">' + label + '</span>'); }
+    function best(get) {
+      var sorted = ranked.slice().sort(function (a, b) { return get(b) - get(a); });
+      if (!sorted.length || get(sorted[0]) <= 0) return null;
+      if (sorted.length > 1 && get(sorted[1]) === get(sorted[0])) return null;   // tie: nobody
+      return sorted[0];
+    }
+    var l = best(function (r) { return r.s.done; });
+    if (l) push(l.m.id, 'lead', 'Leader');
+    var st = best(function (r) { return r.s.streak; });
+    if (st && st.s.streak > 1) push(st.m.id, 'streak', st.s.streak + ' day streak');
+    var bo = best(function (r) { return r.s.bonus; });
+    if (bo) push(bo.m.id, 'bonus', 'Most bonus');
+    var mi = best(function (r) { return r.s.mins; });
+    if (mi) push(mi.m.id, 'mins', fmt(mi.s.mins) + ' min');
+    ranked.forEach(function (r) {
+      if (r.s.missed === 0 && r.s.done > 0 && r.s.dayIndex > 2) push(r.m.id, 'perfect', 'Not one missed');
+    });
+    return out;
+  }
+
+  function standings() {
+    return state.members.map(function (m) { return { m: m, s: stats(state, m) }; })
       .sort(function (a, b) {
         if (b.s.done !== a.s.done) return b.s.done - a.s.done;
         if (b.s.streak !== a.s.streak) return b.s.streak - a.s.streak;
         if (b.s.bonus !== a.s.bonus) return b.s.bonus - a.s.bonus;
         return a.m.name.localeCompare(b.m.name);
       });
+  }
+
+  // Standings as text, for pasting into the group chat.
+  function standingsText() {
+    var ranked = standings();
+    var today = todayKey();
+    var lines = [state.challenge.name.toUpperCase()];
+    ranked.forEach(function (r, i) {
+      var mark = isRest(state, r.m.id, today) && !dayComplete(state, r.m.id, today) ? 'resting'
+        : dayComplete(state, r.m.id, today) ? 'done today'
+        : dayTouched(state, r.m.id, today) ? 'part way'
+        : 'not in yet';
+      lines.push((i + 1) + '. ' + r.m.name + ' — day ' + r.s.current + ', ' + r.s.done + ' done' +
+        (r.s.streak > 1 ? ', ' + r.s.streak + ' streak' : '') +
+        (r.s.bonus ? ', +' + r.s.bonus + ' bonus' : '') + ' (' + mark + ')');
+    });
+    var slack = ranked.filter(function (r) {
+      return !dayTouched(state, r.m.id, today) && !isRest(state, r.m.id, today);
+    }).map(function (r) { return r.m.name; });
+    if (slack.length) lines.push('', 'Still owing today: ' + slack.join(', '));
+    return lines.join('\n');
+  }
+
+  function viewSquad() {
+    var today = todayKey();
+    var ranked = standings();
+    var aw = awards(ranked);
     var checkedIn = ranked.filter(function (r) { return dayTouched(state, r.m.id, today); }).length;
+    var total = state.challenge.days;
 
     var out = '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">The squad</div>' +
-      '<div class="h-sec">' + checkedIn + ' of ' + ranked.length + ' in today</div></div></div><div class="squad">';
+      '<div class="h-sec">' + checkedIn + ' of ' + ranked.length + ' in today</div></div></div>';
+
+    /* roll call — who has shown up, who has not */
+    out += '<div class="roll rise" style="--i:1">' + ranked.map(function (r) {
+      var resting = isRest(state, r.m.id, today) && !dayComplete(state, r.m.id, today);
+      var inToday = dayTouched(state, r.m.id, today);
+      var cls = resting ? 'rest' : (inToday ? 'in' : '');
+      return '<span class="roll-chip ' + cls + '">' +
+        '<span class="roll-av" style="background:' + escapeHtml(r.m.color) + '">' + escapeHtml(initials(r.m.name)) + '</span>' +
+        '<span class="roll-name">' + escapeHtml(r.m.name) + '</span></span>';
+    }).join('') + '</div>';
+
+    /* the race — one lane each, finish line at the last day */
+    out += '<div class="rule" style="margin-top:22px"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">The race to day ' + total + '</div>';
+    out += '<div class="race rise" style="--i:2">' + ranked.map(function (r, i) {
+      var pct = total ? Math.min(100, 100 * r.s.done / total) : 0;
+      var lead = i === 0 && r.s.done > 0;
+      return '<div class="lane">' +
+        '<span class="lane-av" style="background:' + escapeHtml(r.m.color) + '">' + escapeHtml(initials(r.m.name)) + '</span>' +
+        '<span class="lane-track' + (lead ? ' lead' : '') + '">' +
+        '<i style="width:' + pct.toFixed(1) + '%;background:' + escapeHtml(r.m.color) + '"></i></span>' +
+        '<span class="lane-n' + (lead ? ' lead' : '') + '">' + r.s.done + '</span></div>';
+    }).join('') + '</div>';
+    out += '<div class="race-foot"><span class="eyebrow mute">Day 1</span>' +
+      '<span class="eyebrow mute">Finish · day ' + total + '</span></div>';
+
+    /* standings */
+    out += '<div class="rule"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">Standings</div>';
+    out += '<div class="squad" style="margin-top:11px">';
     ranked.forEach(function (r, i) {
       var inToday = dayTouched(state, r.m.id, today);
       var restToday = isRest(state, r.m.id, today) && !dayComplete(state, r.m.id, today);
       var tag = restToday ? '<span class="today-tag rest">Rest</span>'
         : inToday ? '<span class="today-tag in">In</span>'
         : '<span class="today-tag">' + (r.s.streak > 0 ? r.s.streak + ' streak' : 'not yet') + '</span>';
-      out += '<div class="mate rise' + (r.m.id === me ? ' me' : '') + '" style="--i:' + (i + 1) + '">' +
+      out += '<div class="mate rise' + (r.m.id === me ? ' me' : '') + '" style="--i:' + (i + 3) + '">' +
         '<span class="rank">' + (i + 1) + '</span>' +
         '<span class="av" style="background:' + escapeHtml(r.m.color) + '">' + escapeHtml(initials(r.m.name)) + '</span>' +
         '<span class="mate-body"><span class="mate-name">' + escapeHtml(r.m.name) +
         (r.m.id === me ? '<span class="you-tag">You</span>' : '') + '</span>' +
         '<span class="mate-plan">' + escapeHtml(r.m.plan || 'no plan set') +
         (r.s.mins ? ' · ' + fmt(r.s.mins) + ' min' : '') + '</span>' +
+        (aw[r.m.id] ? '<span class="awards">' + aw[r.m.id].join('') + '</span>' : '') +
         '<span class="mini">' + miniChain(r.m, r.s) + '</span></span>' +
         '<span class="mate-right"><span class="mate-day">' + r.s.done + '</span>' +
         (r.s.bonus ? '<span class="bonus-badge">+' + r.s.bonus + '</span>' : '') + tag + '</span></div>';
@@ -1122,6 +1244,17 @@ select.input{appearance:none}
       '<span class="key-item"><span class="key-sw" style="background:var(--rest)"></span>Rest</span>' +
       '<span class="key-item"><span class="key-sw" style="background:var(--miss)"></span>Missed</span>' +
       '<span class="key-item"><span class="key-sw" style="background:var(--bonus)"></span>Bonus</span></div>';
+
+    /* callout for the group chat */
+    out += '<div class="rule"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">Call them out</div>';
+    out += '<button class="btn block" data-act="copy-standings" style="margin-top:11px">Copy the standings</button>';
+    if (copyBox) {
+      out += '<textarea class="copybox" id="copy-out" readonly>' + escapeHtml(standingsText()) + '</textarea>' +
+        '<p class="footer-note left">' + (copyBox === 'copied'
+          ? 'Copied. Paste it in the group chat.'
+          : 'Could not reach the clipboard here — select this and copy it by hand.') + '</p>';
+    }
 
     out += '<div class="rule"></div><div class="field"><label for="add-mate">Add someone</label>' +
       '<div class="inline"><input class="input" id="add-mate" placeholder="Their name"' + (mode === 'readonly' ? ' disabled' : '') + '>' +
@@ -1339,7 +1472,7 @@ select.input{appearance:none}
     if (!el || el.disabled) return;
     var act = el.dataset.act;
 
-    if (act === 'tab') { tab = el.dataset.tab; openDay = null; selBar = null; render(); window.scrollTo(0, 0); return; }
+    if (act === 'tab') { tab = el.dataset.tab; openDay = null; selBar = null; copyBox = null; render(); window.scrollTo(0, 0); return; }
 
     if (act === 'gate-plan') {
       var nameEl = document.getElementById('gate-name');
@@ -1448,6 +1581,17 @@ select.input{appearance:none}
       scheduleSave(); tab = 'today'; render();
       return;
     }
+    if (act === 'copy-standings') {
+      var txt = standingsText();
+      var done = function (ok) { copyBox = ok ? 'copied' : 'manual'; keepScroll(function () {}); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(false); });
+        } else done(false);
+      } catch (err) { done(false); }
+      return;
+    }
+
     if (act === 'save-now') {
       clearTimeout(saveTimer);
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();

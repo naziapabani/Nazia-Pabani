@@ -33,8 +33,19 @@ ticks the workout boxes for you. Totals, a minutes-per-day chart against your
 target, and a paste box that pulls the numbers out of text copied from a watch
 app.
 
-**Squad** — everyone on the board ranked by days completed, with each person's
-streak history as a mini chain and who has checked in today.
+**Squad** — a roll call of who has shown up today, a race to the finish with a
+lane each, standings with earned titles (*Leader*, *N day streak*, *Most bonus*,
+*Not one missed*), and a button that copies the standings as text to paste into
+the group chat.
+
+Titles are only awarded on a strict win, so a tie hands out nothing and they stay
+worth having.
+
+Member colours are deliberately kept clear of the four status hues, so an avatar
+never reads as "complete" or "missed". With four hues already reserved there is
+no fully colourblind-safe six-person set — cyan/pink and lime/amber collapse for
+deuteranopes in any order — so identity never rests on colour: every member mark
+carries their initials.
 
 **Card** — the full punch card. Tap any day to fill it in after the fact.
 
