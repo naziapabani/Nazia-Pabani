@@ -1,12 +1,18 @@
 # Hard Enough 💪
 
 A 75 Hard tracker scaled down to something you'll actually finish. Pick your own
-day count, pick your own rules, and share one live board with your friends.
+day count, pick your own nutrition plan, book days off when life happens, and
+share one live board with your friends.
+
+Branding follows the Niarox invoice palette: deep navy `#171F2D`, cornflower
+`#82A3CC`, oversized Anton caps. Extended with four semantic hues the tracker
+needs — mint for complete, violet for bonus, cornflower for rest, coral for
+missed.
 
 ## What it does
 
-**Today** — the day you're on, a checklist of that day's tasks, and a chain gauge
-showing every day of the challenge at a glance.
+**Today** — the day you're on, the checklist split into *Every day* and *Go
+harder*, and a chain gauge showing every day of the challenge at a glance.
 
 **Squad** — everyone on the board ranked by days completed, with each person's
 streak history as a mini chain and who has checked in today.
@@ -14,25 +20,48 @@ streak history as a mini chain and who has checked in today.
 **Card** — the full punch card. Tap any day to fill it in after the fact.
 
 **Settings** — everything is editable: challenge name, day count, your start
-date, the task list, whether each task is required or optional, and what happens
-when you miss a day.
+date, your nutrition plan, the task list, whether each task is every-day or
+bonus, how many rest days you get, and what happens when you miss a day.
 
 ## What makes it looser than 75 Hard
 
 | 75 Hard | Hard Enough (defaults) |
 | --- | --- |
 | 75 days, fixed | 45 days, change it to anything from 1 to 365 |
-| Two 45-min workouts, one outdoors | One 30-min workout; "get outside" is optional |
-| A gallon of water | 3 litres |
-| 10 pages of non-fiction | 10 pages of anything |
-| Progress photo required | Progress photo optional |
-| Miss anything → restart at day 1 | 5 misses allowed; or strict, or no reset at all |
+| Two 45-min workouts, one outdoors | One 45-min workout; the second is bonus |
+| A gallon of water | A gallon of water (unchanged) |
+| A diet of your choice | A diet of your choice, picked at signup and shown on the checkmark |
+| 10 pages of non-fiction | 10 pages of non-fiction |
+| Progress photo required | Progress photo is bonus |
+| Miss anything → restart at day 1 | 5 rest days you book on purpose, then 3 misses |
 
-A day counts as complete when every **required** task is ticked. Optional tasks
-are there for credit, not pressure.
+A day counts as complete when every **every day** task is ticked. **Bonus** tasks
+never block a day — they stack up a separate score, so anyone who wants the full
+75 Hard load can chase it and it shows on the leaderboard as `+N`.
 
 Everyone counts from their **own** start date, so friends can join late without
 wrecking the board.
+
+### Nutrition plans
+
+Each person picks their own plan when they join — presets like *High protein* or
+*Mediterranean*, or type your own. It becomes the subtitle on that person's daily
+nutrition checkmark and shows next to their name on the squad board. Change it
+any time in Settings.
+
+### Rest days
+
+The reason this is 45 and not 75. Book a day off in advance (or on the day) from
+Today or from the Card, for a birthday, a holiday, or a week that got away from
+you. A rest day:
+
+- does **not** count as missed,
+- does **not** break your streak,
+- and is **refunded** if you end up doing all the work anyway.
+
+Misses are the separate, unplanned case: skip a day without booking it off and it
+counts against the miss allowance. Both budgets are configurable, and the reset
+can be switched off entirely.
 
 ## Two ways to run it
 
