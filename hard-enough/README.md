@@ -7,8 +7,9 @@ share one live board with your friends.
 Branding is sampled from the Niarox rate proposal: ground `#171F2D`, panel
 `#1F2D45`, visible rule `#516889`, cornflower `#82A3CC`. Bordered KPI tiles,
 filled label pills, an oversized cropped wordmark and mono data readouts are all
-lifted from that document. Anton for display, Archivo for UI, JetBrains Mono for
-data.
+lifted from that document. Anton for display, Outfit for UI, JetBrains Mono for
+data. (Outfit stands in for Nexa, which is a commercial Fontfabric face and
+cannot be served here — swap it in if you have the licence and the file.)
 
 **Deliberately single-theme.** The brand has no light mode, so the page commits
 to dark and paints every colour explicitly rather than following the viewer's
@@ -75,14 +76,23 @@ by default) ticks the daily workout, and double it also ticks the bonus second
 session. You enter the numbers once instead of logging *and* ticking. Deleting
 the sessions untick them again.
 
-**On uploading watch screenshots:** the page cannot read an image. It has no
-vision model and no way to reach one, and an OCR library can't be loaded (the
-page is locked down to its own assets). So instead:
+**Screenshots, via Live Text.** The page cannot look at an image — it has no
+vision model, no way to reach one, and no way to load an OCR library. But iPhone
+can lift text out of any picture, which covers apps like Ultrahuman that have no
+copy button at all:
 
-- **Paste the text.** Most watch apps let you share or copy a workout summary.
-  The paste box regex-extracts duration (`00:42:30`, `45 min`, `1h 10m`),
-  calories, average heart rate, and the activity type.
-- **Or type three numbers** — minutes, kcal, HR. It's faster than it sounds.
+1. Screenshot the workout.
+2. Open it in Photos, press and hold the text.
+3. Select All, Copy.
+4. Paste into the box and hit the button.
+
+The parser is tuned against real output and runs as a test suite in
+`parser-tests.js` (`node parser-tests.js`). An Ultrahuman screenshot is full of
+traps — a status-bar clock, a start-end range, and five per-zone durations that
+all look like `MM:SS`, plus a MAX HR sitting right next to the average — so
+duration is resolved most-specific-first and a heart rate labelled MAX or sitting
+on a zone bound is never taken. The activity field is free text, so whatever the
+app calls the workout is what gets stored.
 
 ### Rest days
 

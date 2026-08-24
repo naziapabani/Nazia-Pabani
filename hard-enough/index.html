@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#171F2D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style id="app-css">
 *,*::before,*::after{box-sizing:border-box}
 html,body,div,span,h1,h2,h3,h4,p,ul,ol,li,button,input,select,textarea,label,section,header,footer,nav,main{margin:0;padding:0;border:0;font:inherit;color:inherit}
@@ -70,7 +70,7 @@ input,select,textarea{background:none;font-family:inherit}
   --r-sm:2px;
 
   --display:"Anton","Haettenschweiler","Arial Narrow",sans-serif;
-  --body:"Archivo",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  --body:"Outfit",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 
@@ -325,6 +325,12 @@ body::after{
 .field{display:flex;flex-direction:column;gap:6px;margin-top:14px}
 .field > label{font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
 .hint{font-size:11.5px;color:var(--ink-3);line-height:1.5}
+.steps{counter-reset:s;margin:2px 0 9px}
+.steps li{counter-increment:s;position:relative;padding-left:24px;font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-top:5px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:16px;height:16px;
+  font-family:var(--mono);font-size:9px;font-weight:700;color:var(--on-brand);background:var(--brand);
+  display:grid;place-items:center}
+.steps li b{color:var(--ink);font-weight:700}
 .input{
   width:100%;padding:11px 13px;border:1px solid var(--rule);background:var(--ground-2);color:var(--ink);
   font-size:14.5px;transition:border-color .18s;
@@ -416,11 +422,15 @@ select.input{appearance:none}
 
   var LS_KEY = 'hard-enough:state';
   var LS_ME = 'hard-enough:me';
-  var FONTS = 'https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap';
+  var FONTS = 'https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap';
   var COLORS = ['#82A3CC', '#4BE3AE', '#FFCC4D', '#FF6F61', '#9BB8DE', '#6FD3C7', '#E0A3D6', '#C9D46A'];
 
   var PLANS = ['Whole foods, nothing processed','High protein','Mediterranean','Plant-based','Low carb','Calorie target','Cut out sugar','No alcohol'];
-  var WO_TYPES = ['Run','Walk','Lift','Ride','Swim','Yoga','HIIT','Sport','Other'];
+  var WO_QUICK = ['Run','Walk','Lift','Ride','Yoga','Pilates','HIIT','Swim'];
+  // recognised when parsing pasted text; the field itself accepts anything
+  var WO_TYPES = ['Run','Walk','Hike','Lift','Strength','Ride','Cycling','Spin','Swim','Row','Yoga','Pilates',
+    'Barre','HIIT','CrossFit','Elliptical','Stair','Boxing','Dance','Tennis','Basketball','Soccer','Golf',
+    'Climb','Core','Stretch','Mobility','Functional','Treadmill','Sport','Other'];
 
   function defaultState() {
     return {
@@ -724,36 +734,69 @@ select.input{appearance:none}
     else delete state.log[memberId][dateKey];
   }
 
-  // Pull duration / calories / heart rate out of text pasted from a watch app.
+  /* Pull duration / calories / heart rate out of text pasted from a watch app.
+     Tuned against real output. The traps in an Ultrahuman screenshot: a
+     status-bar clock, a start-end range, five per-zone durations that all
+     look like MM:SS, and a MAX HR sitting right beside the average. */
   function parseWorkoutText(txt) {
     var out = { min: 0, kcal: 0, hr: 0, type: '' };
     if (!txt) return out;
-    var t = String(txt).replace(/,/g, '');
+    var t = String(txt).replace(/[\u2013\u2014]/g, '-').replace(/[\u00b7\u2022]/g, ' ').replace(/,/g, '');
+    var m;
 
-    var hms = t.match(/(\d{1,2}):(\d{2}):(\d{2})/);
-    var ms = !hms && t.match(/(?:^|[^\d:])(\d{1,3}):(\d{2})(?!\d|:)/);
-    if (hms) out.min = Math.round(Number(hms[1]) * 60 + Number(hms[2]) + Number(hms[3]) / 60);
-    else if (ms) out.min = Math.round(Number(ms[1]) + Number(ms[2]) / 60);
-    else {
-      var hr2 = t.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
-      var mm = t.match(/(\d+)\s*(?:minutes?|mins?|m)\b/i);
-      if (hr2) out.min += Math.round(Number(hr2[1]) * 60);
-      if (mm) out.min += Number(mm[1]);
+    // duration, most specific first
+    if ((m = t.match(/(\d{1,2}):([0-5]\d):([0-5]\d)(?!\d)/)))                              // 00:42:30
+      out.min = Math.round(Number(m[1]) * 60 + Number(m[2]) + Number(m[3]) / 60);
+    if (!out.min && (m = t.match(/(\d{1,3}):([0-5]\d)\s*(?:m|min|mins|minutes)\b/i)))       // 54:15 m
+      out.min = Math.round(Number(m[1]) + Number(m[2]) / 60);
+    if (!out.min && (m = t.match(/(\d{1,2}):([0-5]\d)\s*([AaPp])\.?[Mm]\.?\s*-\s*(\d{1,2}):([0-5]\d)\s*([AaPp])\.?[Mm]/))) {
+      var a = (Number(m[1]) % 12) * 60 + Number(m[2]) + (/p/i.test(m[3]) ? 720 : 0);
+      var b = (Number(m[4]) % 12) * 60 + Number(m[5]) + (/p/i.test(m[6]) ? 720 : 0);
+      if (b < a) b += 1440;
+      out.min = b - a;
+    }
+    if (!out.min) {
+      var hh = t.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
+      var mn = t.match(/(\d+)\s*(?:minutes?|mins?|m)\b/i);
+      if (hh) out.min += Math.round(Number(hh[1]) * 60);
+      if (mn) out.min += Number(mn[1]);
+    }
+    if (!out.min) {   // bare MM:SS only when it cannot be confused with a clock or a zone
+      var lab = t.match(/(?:duration|elapsed|total\s*time|moving\s*time)\D{0,8}(\d{1,3}):([0-5]\d)/i);
+      // no lookbehind: a bad regex literal is a parse error, not a runtime one,
+      // and would blank the page on older Safari.
+      var all = [], bare = /(^|[^\d:])(\d{1,3}):([0-5]\d)(?![\d:])/g, bm;
+      while ((bm = bare.exec(t))) all.push([bm[2], bm[3]]);
+      if (lab) out.min = Math.round(Number(lab[1]) + Number(lab[2]) / 60);
+      else if (all.length === 1) out.min = Math.round(Number(all[0][0]) + Number(all[0][1]) / 60);
     }
 
-    var cal = t.match(/(\d+(?:\.\d+)?)\s*(?:kcal|cal(?:ories)?)\b/i) ||
-              t.match(/(?:calories|energy|active)\D{0,14}?(\d{2,5})\b/i);
+    // calories
+    var cal = t.match(/(\d{2,5})\s*k?cal(?:ories)?\b/i) ||
+              t.match(/(?:total\s*)?(?:calories|energy)[^\d\n]{0,12}(\d{2,5})/i);
     if (cal) out.kcal = Math.round(Number(cal[1]));
 
-    var bpm = t.match(/(\d{2,3})\s*bpm/i) || t.match(/(?:avg|average)\s*(?:hr|heart\s*rate)\D{0,8}(\d{2,3})/i);
-    if (bpm) out.hr = Number(bpm[1]);
+    // heart rate: a number labelled AVERAGE wins; never MAX, never a zone bound
+    var avg = t.match(/(\d{2,3})\s*bpm\s*(?:average|avg)/i) ||
+              t.match(/(?:average|avg)\.?\s*(?:heart\s*rate|hr|bpm)?[^\d\n]{0,10}?(\d{2,3})/i);
+    if (avg) out.hr = Number(avg[1]);
+    if (!out.hr) {
+      var re = /(?:^|[^\d<>\-])(\d{2,3})\s*bpm(?!\s*(?:max|maximum))/gi, hit;
+      while ((hit = re.exec(t))) {
+        var before = t.slice(Math.max(0, hit.index - 14), hit.index);
+        if (/max|maximum|zone|resting/i.test(before)) continue;
+        if (/[<>\-]\s*$/.test(before)) continue;
+        out.hr = Number(hit[1]);
+        break;
+      }
+    }
 
+    // activity
     for (var i = 0; i < WO_TYPES.length; i++) {
       if (new RegExp('\\b' + WO_TYPES[i] + '\\b', 'i').test(t)) { out.type = WO_TYPES[i]; break; }
     }
-    if (!out.type && /outdoor|indoor|treadmill/i.test(t) && /walk/i.test(t)) out.type = 'Walk';
     if (!out.type && /cycl|bike/i.test(t)) out.type = 'Ride';
-    if (!out.type && /strength|weight/i.test(t)) out.type = 'Lift';
+    if (!out.type && /weight/i.test(t)) out.type = 'Lift';
     return out;
   }
 
@@ -965,22 +1008,18 @@ select.input{appearance:none}
 
     /* log form */
     out += '<div class="group-label rise" style="--i:3">Log a session</div>';
-    var f = woForm || {};
-    out += '<div class="chips">' + WO_TYPES.map(function (t) {
-      return '<button class="pick' + (f.type === t ? ' on' : '') + '" data-act="wo-type" data-type="' + t + '">' + t + '</button>';
-    }).join('') + '</div>';
-    out += '<div class="grid3" style="margin-top:8px">' +
-      '<input class="input" id="wo-min" type="number" inputmode="numeric" min="0" max="600" placeholder="Minutes" value="' + (f.min || '') + '">' +
-      '<input class="input" id="wo-kcal" type="number" inputmode="numeric" min="0" max="5000" placeholder="kcal" value="' + (f.kcal || '') + '">' +
-      '<input class="input" id="wo-hr" type="number" inputmode="numeric" min="0" max="250" placeholder="Avg HR" value="' + (f.hr || '') + '">' +
-      '</div>';
-    out += '<button class="btn primary block" data-act="wo-add" data-date="' + today + '" style="margin-top:8px"' +
-      (mode === 'readonly' ? ' disabled' : '') + '>Add to today</button>';
+    out += woEntryForm(today, true);
 
-    out += '<div class="field"><label for="wo-paste">Paste from your watch app</label>' +
-      '<textarea class="input" id="wo-paste" placeholder="Share or copy the workout summary from Apple Fitness, Ultrahuman, Strava — then paste it here and I will pull out the duration, calories and heart rate."></textarea>' +
-      '<button class="btn ghost block" data-act="wo-parse">Read the numbers out of that</button>' +
-      '<span class="hint">Screenshots cannot be read — this page has no way to look at an image. Pasting the <b>text</b> works, and typing three numbers above is quicker than it sounds.</span></div>';
+    out += '<div class="field"><label for="wo-paste">From a screenshot</label>' +
+      '<ol class="steps"><li>Screenshot the workout in Ultrahuman, Fitness, whatever.</li>' +
+      '<li>Open it in <b>Photos</b> and press and hold the text.</li>' +
+      '<li><b>Select All</b>, then <b>Copy</b>.</li>' +
+      '<li>Paste below and hit the button.</li></ol>' +
+      '<textarea class="input" id="wo-paste" placeholder="Paste the copied text here"></textarea>' +
+      '<button class="btn ghost block" data-act="wo-parse">Pull out the numbers</button>' +
+      '<span class="hint">iPhone can lift text straight out of a picture, so an app having no copy button does not matter. ' +
+      'This page cannot look at the image itself — it has no way to see one — but it reads the text fine, ' +
+      'and it knows to take your <b>average</b> heart rate rather than your max.</span></div>';
 
     /* today's sessions */
     var todays = workoutsOn(state, me, today);
@@ -997,6 +1036,24 @@ select.input{appearance:none}
     out += '<p class="footer-note left">Logging a session ticks the workout boxes for you: <b>' + target +
       ' minutes</b> ticks the daily workout, <b>' + (target * 2) + ' minutes</b> also ticks the bonus second session. ' +
       'Change the target in Settings.</p>';
+    return out;
+  }
+
+  // One entry form, used by the Train tab and by any past day on the Card.
+  function woEntryForm(dateKey, primary) {
+    var f = woForm || {};
+    var out = '<input class="input" id="wo-type" placeholder="Activity — Pilates, Run, Lift…" value="' +
+      escapeHtml(f.type || '') + '">';
+    out += '<div class="chips" style="margin-top:7px">' + WO_QUICK.map(function (t) {
+      return '<button class="pick' + (f.type === t ? ' on' : '') + '" data-act="wo-type" data-type="' + t + '">' + t + '</button>';
+    }).join('') + '</div>';
+    out += '<div class="grid3" style="margin-top:8px">' +
+      '<input class="input" id="wo-min" type="number" inputmode="numeric" min="0" max="600" placeholder="Minutes" value="' + (f.min || '') + '">' +
+      '<input class="input" id="wo-kcal" type="number" inputmode="numeric" min="0" max="5000" placeholder="kcal" value="' + (f.kcal || '') + '">' +
+      '<input class="input" id="wo-hr" type="number" inputmode="numeric" min="0" max="250" placeholder="Avg HR" value="' + (f.hr || '') + '">' +
+      '</div>';
+    out += '<button class="btn ' + (primary ? 'primary ' : '') + 'block" data-act="wo-add" data-date="' + dateKey + '" style="margin-top:8px"' +
+      (mode === 'readonly' ? ' disabled' : '') + '>' + (primary ? 'Add to today' : 'Add a session') + '</button>';
     return out;
   }
 
@@ -1136,12 +1193,7 @@ select.input{appearance:none}
         (w.kcal ? fmt(w.kcal) + ' kcal' : 'no kcal') + (w.hr ? ' · ' + w.hr + ' bpm' : '') + '</span></span>' +
         '<button class="xbtn" data-act="wo-del" data-date="' + k + '" data-id="' + escapeHtml(w.id) + '" aria-label="Remove session">' + ICONS.x + '</button></div>';
     });
-    out += '<div class="grid3" style="margin-top:8px">' +
-      '<input class="input" id="wo-min" type="number" inputmode="numeric" placeholder="Minutes">' +
-      '<input class="input" id="wo-kcal" type="number" inputmode="numeric" placeholder="kcal">' +
-      '<input class="input" id="wo-hr" type="number" inputmode="numeric" placeholder="Avg HR"></div>';
-    out += '<button class="btn block" data-act="wo-add" data-date="' + k + '" style="margin-top:7px"' +
-      (mode === 'readonly' ? ' disabled' : '') + '>Add a session to day ' + n + '</button>';
+    out += woEntryForm(k, false);
 
     out += '<div style="margin-top:8px"><button class="btn block rest" data-act="' + (resting ? 'unrest' : 'rest') +
       '" data-date="' + k + '"' + (mode === 'readonly' || (!resting && st.restLeft <= 0) ? ' disabled' : '') + '>' +
@@ -1278,7 +1330,8 @@ select.input{appearance:none}
   function keepScroll(fn) { var y = window.scrollY; fn(); render(); window.scrollTo(0, y); }
   function readWoInputs() {
     var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
-    return { type: (woForm && woForm.type) || 'Other', min: g('wo-min'), kcal: g('wo-kcal'), hr: g('wo-hr') };
+    var type = String(g('wo-type') || '').trim() || (woForm && woForm.type) || 'Other';
+    return { type: type.slice(0, 24), min: g('wo-min'), kcal: g('wo-kcal'), hr: g('wo-hr') };
   }
 
   function onClick(e) {
@@ -1444,7 +1497,7 @@ select.input{appearance:none}
       e.preventDefault();
       var btn = document.querySelector(id === 'add-mate' ? '[data-act="add-mate"]' : '[data-act="join"]');
       if (btn) btn.click();
-    } else if (id === 'wo-min' || id === 'wo-kcal' || id === 'wo-hr') {
+    } else if (id === 'wo-min' || id === 'wo-kcal' || id === 'wo-hr' || id === 'wo-type') {
       e.preventDefault();
       var add = document.querySelector('[data-act="wo-add"]');
       if (add) add.click();
