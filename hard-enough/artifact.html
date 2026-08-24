@@ -1,0 +1,1346 @@
+<title>Hard Enough</title>
+<meta name="description" content="A scaled-down 75 Hard tracker — your days, your rules, your friends.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hard Enough">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B0E13">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=Martian+Mono:wght@400;500;600&display=swap">
+<style id="app-css">
+*,*::before,*::after{box-sizing:border-box}
+html,body,div,span,h1,h2,h3,h4,p,ul,ol,li,button,input,select,textarea,label,section,header,footer,nav,main{margin:0;padding:0;border:0;font:inherit;color:inherit}
+ul,ol{list-style:none}
+button{background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input,select,textarea{background:none;font-family:inherit}
+
+/* ============================================================
+   Tokens. Light is the bare :root; dark redefines the same names
+   in both the media query and the [data-theme] stamp so the page
+   resolves correctly in all three viewer states.
+   ============================================================ */
+:root{
+  color-scheme:light dark;
+
+  --ground:#F2F3F6;
+  --ground-2:#E8EAEF;
+  --surface:#FFFFFF;
+  --surface-2:#F4F5F8;
+  --raised:#FFFFFF;
+  --hairline:rgba(11,14,19,.09);
+  --hairline-soft:rgba(11,14,19,.055);
+  --highlight:rgba(255,255,255,0);
+
+  --text:#0E1218;
+  --text-dim:#57616E;
+  --text-faint:#8A94A2;
+
+  --brand:#E23A16;
+  --brand-bright:#FF4B26;
+  --brand-soft:rgba(226,58,22,.10);
+  --brand-glow:rgba(226,58,22,.16);
+
+  --go:#0FA873;
+  --go-bright:#12C98A;
+  --go-soft:rgba(15,168,115,.12);
+
+  --warn:#B57B08;
+  --warn-soft:rgba(181,123,8,.13);
+
+  --track:rgba(11,14,19,.10);
+
+  --shadow-1:0 1px 2px rgba(13,18,26,.06);
+  --shadow-2:0 2px 4px rgba(13,18,26,.05),0 12px 28px rgba(13,18,26,.07);
+  --shadow-3:0 8px 20px rgba(13,18,26,.10),0 24px 60px rgba(13,18,26,.12);
+
+  --grain:.028;
+
+  --r-xl:26px;
+  --r-lg:20px;
+  --r-md:14px;
+  --r-sm:9px;
+
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --label:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0B0E13;
+    --ground-2:#070A0E;
+    --surface:#141922;
+    --surface-2:#1A202B;
+    --raised:#171D27;
+    --hairline:rgba(255,255,255,.08);
+    --hairline-soft:rgba(255,255,255,.045);
+    --highlight:rgba(255,255,255,.07);
+
+    --text:#EDEFF4;
+    --text-dim:#98A2B1;
+    --text-faint:#68717F;
+
+    --brand:#FF5C39;
+    --brand-bright:#FF4B26;
+    --brand-soft:rgba(255,92,57,.14);
+    --brand-glow:rgba(255,75,38,.22);
+
+    --go:#2EE3A3;
+    --go-bright:#2EE3A3;
+    --go-soft:rgba(46,227,163,.13);
+
+    --warn:#FFC24D;
+    --warn-soft:rgba(255,194,77,.14);
+
+    --track:rgba(255,255,255,.09);
+
+    --shadow-1:0 1px 2px rgba(0,0,0,.5);
+    --shadow-2:0 2px 4px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.45);
+    --shadow-3:0 8px 20px rgba(0,0,0,.5),0 24px 60px rgba(0,0,0,.55);
+
+    --grain:.05;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0B0E13;
+  --ground-2:#070A0E;
+  --surface:#141922;
+  --surface-2:#1A202B;
+  --raised:#171D27;
+  --hairline:rgba(255,255,255,.08);
+  --hairline-soft:rgba(255,255,255,.045);
+  --highlight:rgba(255,255,255,.07);
+  --text:#EDEFF4;
+  --text-dim:#98A2B1;
+  --text-faint:#68717F;
+  --brand:#FF5C39;
+  --brand-bright:#FF4B26;
+  --brand-soft:rgba(255,92,57,.14);
+  --brand-glow:rgba(255,75,38,.22);
+  --go:#2EE3A3;
+  --go-bright:#2EE3A3;
+  --go-soft:rgba(46,227,163,.13);
+  --warn:#FFC24D;
+  --warn-soft:rgba(255,194,77,.14);
+  --track:rgba(255,255,255,.09);
+  --shadow-1:0 1px 2px rgba(0,0,0,.5);
+  --shadow-2:0 2px 4px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.45);
+  --shadow-3:0 8px 20px rgba(0,0,0,.5),0 24px 60px rgba(0,0,0,.55);
+  --grain:.05;
+}
+
+body{
+  font-family:var(--body);
+  background:var(--ground);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.5;
+  letter-spacing:-.008em;
+  -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+/* fine grain — keeps the flat grounds from reading as plastic */
+body::after{
+  content:"";position:fixed;inset:0;z-index:100;pointer-events:none;
+  opacity:var(--grain);mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:6px}
+
+.app{
+  max-width:468px;margin:0 auto;
+  padding:0 20px calc(120px + env(safe-area-inset-bottom));
+  padding-top:env(safe-area-inset-top);
+}
+
+/* ---------------- primitives ---------------- */
+.eyebrow{
+  font-family:var(--label);font-size:9.5px;font-weight:500;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--text-faint);
+}
+.title-xl{font-family:var(--display);font-weight:800;font-size:34px;line-height:1.02;letter-spacing:-.03em;margin-top:5px;text-wrap:balance}
+.mono{font-family:var(--label);letter-spacing:-.02em}
+.dim{color:var(--text-dim)}
+.faint{color:var(--text-faint)}
+.stack{display:flex;flex-direction:column}
+.divider{height:1px;background:var(--hairline);margin-top:30px}
+
+/* staggered entrance */
+@keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.rise{animation:rise .42s cubic-bezier(.22,.9,.3,1) backwards;animation-delay:calc(var(--i,0) * 42ms)}
+
+/* ---------------- top bar ---------------- */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 0 14px;position:sticky;top:0;z-index:40;
+  background:linear-gradient(var(--ground) 68%,transparent);
+}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand-dot{
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;
+  background:var(--brand-bright);box-shadow:0 0 0 4px var(--brand-soft);
+}
+.brand-name{
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.topbar-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+
+.chip{
+  font-family:var(--label);font-size:8.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+  padding:5px 9px;border-radius:999px;border:1px solid var(--hairline);color:var(--text-faint);
+  background:var(--surface);white-space:nowrap;transition:color .25s,border-color .25s,background .25s;
+}
+.chip[data-state="pending"],.chip[data-state="saving"]{color:var(--warn);border-color:transparent;background:var(--warn-soft)}
+.chip[data-state="saved"]{color:var(--go);border-color:transparent;background:var(--go-soft)}
+.chip[data-state="readonly"],.chip[data-state="error"]{color:var(--brand);border-color:transparent;background:var(--brand-soft)}
+
+.icon-btn{
+  width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
+  border:1px solid var(--hairline);color:var(--text-dim);background:var(--surface);
+  box-shadow:var(--shadow-1);transition:color .18s,transform .12s;
+}
+.icon-btn:hover{color:var(--text)}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn svg{width:17px;height:17px;display:block}
+
+/* ---------------- hero panel ---------------- */
+.hero{
+  position:relative;overflow:hidden;isolation:isolate;
+  border-radius:var(--r-xl);background:var(--raised);
+  border:1px solid var(--hairline);box-shadow:var(--shadow-2);
+  padding:20px 20px 0;
+}
+.hero::before{  /* inner top highlight — the edge catch that gives it depth */
+  content:"";position:absolute;top:0;left:14px;right:14px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--highlight),transparent);
+}
+.hero::after{   /* accent bloom behind the numeral */
+  content:"";position:absolute;z-index:-1;width:280px;height:280px;left:-70px;top:-120px;
+  background:radial-gradient(circle,var(--glow-c,var(--brand-glow)) 0%,transparent 68%);
+  transition:background .5s ease;
+}
+.hero.is-done{--glow-c:var(--go-soft)}
+.hero-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.hero-num{display:flex;align-items:baseline;gap:9px;margin-top:8px}
+.daynum{
+  font-family:var(--display);font-weight:800;font-size:112px;line-height:.8;font-variant-numeric:tabular-nums;
+  letter-spacing:-.055em;color:var(--text);transition:color .4s ease;
+  font-feature-settings:"ss01";
+}
+.hero.is-done .daynum{color:var(--go)}
+.hero.is-rest .daynum{color:var(--text-faint)}
+.day-of{font-family:var(--label);font-size:12px;color:var(--text-faint);letter-spacing:-.02em}
+.hero-date{font-family:var(--label);font-size:10px;color:var(--text-dim);letter-spacing:.06em;text-align:right;white-space:nowrap}
+
+.pill{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+  font-family:var(--label);font-size:8.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  padding:5px 10px;border-radius:999px;white-space:nowrap;
+}
+.pill::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.pill.go{background:var(--go-soft);color:var(--go)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--brand-soft);color:var(--brand)}
+.pill.flat{background:var(--surface-2);color:var(--text-faint)}
+
+/* the chain — a gauge, one bar per day, inset into the hero's base */
+.chain-wrap{margin:22px -20px 0;padding:14px 20px 16px;border-top:1px solid var(--hairline-soft);background:var(--surface-2)}
+.chain{display:flex;gap:2px;align-items:flex-end;height:34px}
+.tick{flex:1 1 0;min-width:0;border-radius:2px;background:var(--track);height:9px;transition:height .3s cubic-bezier(.22,.9,.3,1),background .3s}
+.tick.part{background:var(--warn);height:20px}
+.tick.miss{background:var(--brand);height:9px}
+.tick.done{background:var(--go);height:34px}
+.tick.today{background:var(--text);height:34px;box-shadow:0 0 0 1px var(--surface-2)}
+.tick.today.done{background:var(--go)}
+.chain-legend{display:flex;justify-content:space-between;margin-top:9px}
+
+/* ---------------- tasks ---------------- */
+.tasks{display:flex;flex-direction:column;gap:9px;margin-top:26px}
+.task{
+  display:flex;align-items:flex-start;gap:14px;width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);
+  padding:15px 16px;box-shadow:var(--shadow-1);
+  transition:border-color .2s,background .2s,transform .1s cubic-bezier(.22,.9,.3,1);
+}
+.task:active{transform:scale(.985)}
+.task.on{border-color:transparent;background:var(--go-soft)}
+.task[disabled]{opacity:.5;cursor:default}
+.task[disabled]:active{transform:none}
+.box{
+  flex-shrink:0;width:26px;height:26px;border-radius:9px;margin-top:1px;
+  border:1.5px solid var(--track);display:grid;place-items:center;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.task.on .box{background:var(--go);border-color:var(--go);box-shadow:0 0 0 4px var(--go-soft)}
+.box svg{width:14px;height:14px;color:var(--ground);opacity:0;transform:scale(.5) rotate(-12deg);transition:opacity .16s,transform .34s cubic-bezier(.18,1.6,.35,1)}
+.task.on .box svg{opacity:1;transform:none}
+.task.pop .box{animation:thump .34s cubic-bezier(.22,.9,.3,1)}
+@keyframes thump{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+.task-body{min-width:0;flex:1}
+.task-label{
+  font-weight:600;font-size:15px;letter-spacing:-.015em;line-height:1.3;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;transition:color .2s;
+}
+.task.on .task-label{color:var(--go)}
+.task-detail{font-size:12.5px;color:var(--text-dim);margin-top:3px;line-height:1.4;letter-spacing:0}
+.tag-opt{
+  font-family:var(--label);font-size:7.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-faint);border:1px solid var(--hairline);border-radius:4px;padding:2px 5px;
+}
+
+/* ---------------- stat strip ---------------- */
+.summary{
+  display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px;
+  background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);
+  overflow:hidden;box-shadow:var(--shadow-1);
+}
+.stat{padding:14px 12px;display:flex;flex-direction:column;gap:3px;border-left:1px solid var(--hairline-soft)}
+.stat:first-child{border-left:0}
+.stat-n{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.stat-l{font-family:var(--label);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-faint)}
+.stat.go .stat-n{color:var(--go)}
+.stat.bad .stat-n{color:var(--brand)}
+
+.note{
+  margin-top:12px;padding:14px 16px;border-radius:var(--r-md);font-size:13px;line-height:1.5;
+  border:1px solid var(--hairline);color:var(--text-dim);background:var(--surface);
+}
+.note.alert{border-color:transparent;background:var(--brand-soft);color:var(--brand)}
+.note b{font-weight:600;color:var(--text)}
+.note.alert b{color:inherit}
+
+/* ---------------- squad ---------------- */
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:24px 0 14px}
+.squad{display:flex;flex-direction:column;gap:9px}
+.mate{
+  display:flex;align-items:center;gap:13px;padding:14px 16px;
+  background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);box-shadow:var(--shadow-1);
+  position:relative;overflow:hidden;
+}
+.mate.me{border-color:var(--text-faint)}
+.mate.me::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;border-radius:0 2px 2px 0;background:var(--brand-bright)}
+.rank{font-family:var(--label);font-size:10px;color:var(--text-faint);width:14px;flex-shrink:0;letter-spacing:-.02em}
+.av{
+  width:38px;height:38px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:15px;color:#fff;letter-spacing:-.02em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22);
+}
+.mate-body{flex:1;min-width:0}
+.mate-name{font-weight:600;font-size:14.5px;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.you-tag{font-family:var(--label);font-size:7.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);background:var(--brand-soft);padding:2px 5px;border-radius:4px}
+.mini{display:flex;gap:1px;align-items:flex-end;height:13px;margin-top:6px}
+.mini span{flex:1 1 0;min-width:0;border-radius:1px;background:var(--track);height:4px}
+.mini span.done{background:var(--go);height:13px}
+.mini span.part{background:var(--warn);height:8px}
+.mini span.miss{background:var(--brand);height:4px}
+.mate-right{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.mate-day{font-family:var(--display);font-weight:700;font-size:25px;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.today-tag{font-family:var(--label);font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--surface-2);color:var(--text-faint)}
+.today-tag.in{background:var(--go-soft);color:var(--go)}
+
+.key{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px}
+.key-item{display:flex;align-items:center;gap:7px;font-family:var(--label);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--text-faint)}
+.key-sw{width:10px;height:10px;border-radius:3px;background:var(--track)}
+
+/* ---------------- the card (grid) ---------------- */
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.cell{
+  aspect-ratio:1;border-radius:var(--r-md);border:1px solid var(--hairline);background:var(--surface);
+  position:relative;display:grid;place-items:center;
+  font-family:var(--label);font-size:10px;color:var(--text-faint);letter-spacing:-.03em;
+  box-shadow:var(--shadow-1);transition:transform .1s cubic-bezier(.22,.9,.3,1),border-color .18s;
+}
+.cell:active{transform:scale(.9)}
+.cell .n{position:absolute;top:5px;left:6px;font-size:8.5px;opacity:.72}
+.cell .m{display:grid;place-items:center;font-size:13px;line-height:1}
+.cell .m svg{width:13px;height:13px}
+.cell.done{background:var(--go);border-color:transparent;color:var(--ground)}
+.cell.done .n{opacity:.6}
+.cell.part{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.cell.miss{background:var(--brand-soft);border-color:transparent;color:var(--brand)}
+.cell.future{background:transparent;border-style:dashed;opacity:.55}
+.cell.today{border-color:var(--text);color:var(--text)}
+.cell.today.done{color:var(--ground)}
+.cell.today::after{content:"";position:absolute;inset:-3.5px;border-radius:18px;border:1.5px solid var(--text);opacity:.5;pointer-events:none}
+
+/* ---------------- forms ---------------- */
+.field{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.field > label{font-family:var(--label);font-size:8.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--text-faint)}
+.hint{font-size:12px;color:var(--text-faint);line-height:1.45}
+.input{
+  width:100%;padding:13px 15px;border-radius:var(--r-md);border:1px solid var(--hairline);
+  background:var(--surface);color:var(--text);font-size:15px;letter-spacing:-.01em;
+  box-shadow:var(--shadow-1);transition:border-color .18s,box-shadow .18s;
+}
+.input::placeholder{color:var(--text-faint)}
+.input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
+select.input{appearance:none}
+.inline{display:flex;gap:9px;align-items:center}
+.btn{
+  padding:13px 18px;border-radius:var(--r-md);font-weight:600;font-size:14.5px;letter-spacing:-.015em;
+  border:1px solid var(--hairline);color:var(--text);background:var(--surface);box-shadow:var(--shadow-1);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .1s cubic-bezier(.22,.9,.3,1),opacity .18s;
+}
+.btn:active{transform:scale(.975)}
+.btn.primary{background:var(--brand-bright);color:#fff;border-color:transparent;box-shadow:0 6px 20px var(--brand-glow)}
+.btn.ghost{border-style:dashed;color:var(--text-dim);box-shadow:none;background:transparent}
+.btn.danger{color:var(--brand);border-color:var(--brand);background:transparent;box-shadow:none}
+.btn.block{width:100%}
+.btn.sm{padding:8px 13px;font-size:12.5px;border-radius:10px}
+
+.editrow{
+  display:flex;gap:11px;align-items:flex-start;padding:13px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--hairline);margin-top:9px;box-shadow:var(--shadow-1);
+}
+.editrow .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.editrow .input{padding:9px 11px;font-size:14px;border-radius:10px;box-shadow:none}
+.editrow .input.small{font-size:12.5px;color:var(--text-dim)}
+.reqtoggle{
+  font-family:var(--label);font-size:8px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+  padding:6px 10px;border-radius:999px;border:1px solid var(--hairline);color:var(--text-faint);white-space:nowrap;
+  transition:color .18s,background .18s,border-color .18s;
+}
+.reqtoggle.on{border-color:transparent;color:var(--go);background:var(--go-soft)}
+.xbtn{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--text-faint);border:1px solid transparent;flex-shrink:0;transition:color .18s,background .18s}
+.xbtn:hover{color:var(--brand);background:var(--brand-soft)}
+.xbtn svg{width:14px;height:14px}
+
+/* ---------------- gate ---------------- */
+.gate{display:flex;flex-direction:column;justify-content:center;min-height:100dvh;padding:56px 0 40px}
+.gate-title{font-family:var(--display);font-weight:800;font-size:60px;line-height:.88;letter-spacing:-.045em;margin-top:12px;text-wrap:balance}
+.gate-sub{margin-top:16px;font-size:15.5px;color:var(--text-dim);line-height:1.55;max-width:34ch}
+.rules-peek{margin-top:22px;padding:16px 18px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--hairline);box-shadow:var(--shadow-1)}
+.rules-peek li{font-size:14px;color:var(--text-dim);padding:4px 0;display:flex;gap:11px;align-items:center;letter-spacing:-.01em}
+.rules-peek li::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--go);flex-shrink:0}
+.who{display:flex;flex-direction:column;gap:9px;margin-top:24px}
+.who-btn{
+  display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:var(--r-lg);
+  border:1px solid var(--hairline);background:var(--surface);text-align:left;box-shadow:var(--shadow-1);
+  transition:transform .1s cubic-bezier(.22,.9,.3,1);
+}
+.who-btn:active{transform:scale(.985)}
+.who-sub{font-family:var(--label);font-size:9.5px;color:var(--text-faint);letter-spacing:.04em;margin-top:2px}
+
+/* ---------------- floating tab bar ---------------- */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;pointer-events:none;
+  padding:0 20px calc(16px + env(safe-area-inset-bottom));
+  display:flex;justify-content:center;
+}
+.tabbar-inner{
+  pointer-events:auto;width:100%;max-width:340px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:5px;
+  border-radius:999px;border:1px solid var(--hairline);
+  background:color-mix(in srgb,var(--surface) 82%,transparent);
+  backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);
+  box-shadow:var(--shadow-3);
+}
+.tab{
+  padding:9px 0 8px;border-radius:999px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--text-faint);transition:color .2s,background .25s cubic-bezier(.22,.9,.3,1);
+}
+.tab.on{color:var(--text);background:var(--surface-2)}
+.tab svg{width:19px;height:19px;display:block}
+.tab span{font-family:var(--label);font-size:7.5px;letter-spacing:.15em;text-transform:uppercase}
+
+.footer-note{margin-top:24px;font-size:11.5px;color:var(--text-faint);line-height:1.55;text-align:center;letter-spacing:0}
+.footer-note.left{text-align:left;margin-top:12px}
+.footer-note b{color:var(--text-dim);font-weight:600}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0ms !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script id="app-state" type="application/json">null</script>
+<script id="app-js">
+(function () {
+  'use strict';
+
+  /* ============================================================
+     Hard Enough — a scaled-down 75 Hard tracker.
+     Two storage modes, decided at load:
+       shared — published Artifact page; every check-in publishes a new
+                version of this document, so the squad shares one board.
+       local  — plain file / static host; state lives in localStorage.
+     ============================================================ */
+
+  var LS_KEY = 'hard-enough:state';
+  var LS_ME = 'hard-enough:me';
+  var FONTS = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=Martian+Mono:wght@400;500;600&display=swap';
+  var COLORS = ['#FF4B26', '#0FA873', '#4C6FD6', '#B57B08', '#9C4699', '#1F8FA8', '#C2571C', '#5B7A2E'];
+
+  function defaultState() {
+    return {
+      v: 1,
+      challenge: {
+        name: 'Hard Enough',
+        days: 45,
+        reset: { enabled: true, allowance: 5 },
+        tasks: [
+          { id: 't1', label: 'Move for 30 minutes', detail: 'Any workout. A brisk walk counts.', required: true },
+          { id: 't2', label: 'Get outside', detail: '15 minutes of outdoor air, any weather.', required: false },
+          { id: 't3', label: 'Drink 3 litres of water', detail: 'About 100 oz. Sip through the day.', required: true },
+          { id: 't4', label: 'Read 10 pages', detail: 'Any book. Fiction is allowed here.', required: true },
+          { id: 't5', label: 'Stick to your food plan', detail: 'Whatever you decided on day one.', required: true },
+          { id: 't6', label: 'Progress photo', detail: 'Same spot, same light.', required: false }
+        ]
+      },
+      members: [],
+      log: {}
+    };
+  }
+
+  /* ---------------- dates (local time, never UTC) ---------------- */
+
+  function toKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function fromKey(k) {
+    var p = String(k).split('-');
+    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  }
+  function addDays(k, n) {
+    var d = fromKey(k);
+    return toKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n));
+  }
+  function daysBetween(a, b) {
+    return Math.round((fromKey(b).getTime() - fromKey(a).getTime()) / 86400000);
+  }
+  function todayKey() { return toKey(new Date()); }
+  function prettyDate(k) {
+    return fromKey(k).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  /* ---------------- derived ---------------- */
+
+  function requiredIds(s) {
+    return s.challenge.tasks.filter(function (t) { return t.required; }).map(function (t) { return t.id; });
+  }
+  function doneOn(s, memberId, dateKey) {
+    var byMember = s.log[memberId];
+    return (byMember && byMember[dateKey]) || [];
+  }
+  function dayComplete(s, memberId, dateKey) {
+    var req = requiredIds(s);
+    var got = doneOn(s, memberId, dateKey);
+    if (!req.length) return got.length > 0;
+    return req.every(function (id) { return got.indexOf(id) !== -1; });
+  }
+  function dayTouched(s, memberId, dateKey) {
+    return doneOn(s, memberId, dateKey).length > 0;
+  }
+
+  // Day 1 is the member's own start date, so friends can join whenever.
+  function dayIndex(member, dateKey) { return daysBetween(member.startDate, dateKey) + 1; }
+  function keyForDay(member, n) { return addDays(member.startDate, n - 1); }
+
+  function stats(s, member) {
+    var total = s.challenge.days;
+    var todayIdx = dayIndex(member, todayKey());
+    var elapsed = Math.min(Math.max(todayIdx, 0), total);
+    var done = 0, missed = 0, streak = 0, run = 0;
+
+    for (var i = 1; i <= elapsed; i++) {
+      if (dayComplete(s, member.id, keyForDay(member, i))) {
+        done++; run++; streak = run;
+      } else if (i < todayIdx) {
+        // Today doesn't count as missed until it's over.
+        missed++; run = 0; streak = 0;
+      }
+    }
+    var allowance = s.challenge.reset.enabled ? s.challenge.reset.allowance : Infinity;
+    return {
+      total: total,
+      dayIndex: todayIdx,
+      current: Math.min(Math.max(todayIdx, 1), total),
+      done: done,
+      missed: missed,
+      streak: streak,
+      remaining: Math.max(total - elapsed, 0),
+      graceLeft: allowance === Infinity ? Infinity : Math.max(allowance - missed, 0),
+      blown: allowance !== Infinity && missed > allowance,
+      notStarted: todayIdx < 1,
+      finished: todayIdx > total
+    };
+  }
+
+  /* ---------------- state + storage ---------------- */
+
+  var state = null;
+  var mode = 'local';        // 'shared' | 'local' | 'readonly'
+  var artifactApi = null;
+  var me = null;             // member id for this device
+  var tab = 'today';
+  var saveTimer = null;
+  var saving = false;
+  var retried = false;
+  var status = 'idle';
+  var popId = null;          // task to animate after re-render
+  var openDay = null;        // day being backfilled
+
+  function readEmbedded() {
+    var el = document.getElementById('app-state');
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+  }
+
+  function migrate(s) {
+    if (!s || typeof s !== 'object') return defaultState();
+    var d = defaultState();
+    s.challenge = Object.assign({}, d.challenge, s.challenge || {});
+    s.challenge.reset = Object.assign({}, d.challenge.reset, s.challenge.reset || {});
+    if (!Array.isArray(s.challenge.tasks)) s.challenge.tasks = d.challenge.tasks;
+    if (!Array.isArray(s.members)) s.members = [];
+    if (!s.log || typeof s.log !== 'object') s.log = {};
+    s.members.forEach(function (m, i) {
+      if (!m.startDate) m.startDate = todayKey();
+      if (!m.color) m.color = COLORS[i % COLORS.length];
+    });
+    return s;
+  }
+
+  async function initStorage() {
+    try {
+      if (window.claude && typeof window.claude.use === 'function') {
+        artifactApi = await window.claude.use('artifact');
+      }
+    } catch (e) {
+      artifactApi = null;
+    }
+
+    if (artifactApi) {
+      mode = 'shared';
+      state = migrate(readEmbedded() || defaultState());
+    } else {
+      mode = 'local';
+      var raw = null;
+      try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
+      try {
+        state = migrate(raw ? JSON.parse(raw) : (readEmbedded() || defaultState()));
+      } catch (e) {
+        state = migrate(readEmbedded() || defaultState());
+      }
+    }
+
+    try { me = localStorage.getItem(LS_ME); } catch (e) { me = null; }
+    if (me && !state.members.some(function (m) { return m.id === me; })) me = null;
+
+    // Survive the reload a successful publish causes.
+    try {
+      var stash = sessionStorage.getItem('hard-enough:ui');
+      if (stash) {
+        var ui = JSON.parse(stash);
+        if (ui.tab) tab = ui.tab;
+        sessionStorage.removeItem('hard-enough:ui');
+      }
+    } catch (e) { /* private mode can throw */ }
+  }
+
+  function statusLabel(s) {
+    if (s === 'pending') return 'Unsaved';
+    if (s === 'saving') return 'Saving';
+    if (s === 'saved') return 'Saved';
+    if (s === 'readonly') return 'Read only';
+    if (s === 'error') return 'Not saved';
+    return mode === 'shared' ? 'Shared' : 'This phone';
+  }
+  function setStatus(s) {
+    status = s;
+    var el = document.getElementById('status-chip');
+    if (el) { el.dataset.state = s; el.textContent = statusLabel(s); }
+  }
+
+  function scheduleSave(delay) {
+    if (mode === 'readonly') return;
+    setStatus('pending');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(commit, delay || 1100);
+  }
+
+  function stashUi() {
+    try { sessionStorage.setItem('hard-enough:ui', JSON.stringify({ tab: tab })); } catch (e) { /* ignore */ }
+  }
+
+  async function commit() {
+    if (mode === 'readonly' || saving) return;
+
+    if (mode === 'local') {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); setStatus('saved'); }
+      catch (e) { setStatus('error'); }
+      return;
+    }
+
+    // Never publish mid-typing: the reload would steal focus.
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(commit, 1400);
+      return;
+    }
+
+    saving = true;
+    setStatus('saving');
+    stashUi();
+    try {
+      await artifactApi.publish(renderDocument(state));
+      retried = false;
+      setStatus('saved');   // the shell reloads this view to the new version
+    } catch (err) {
+      var code = (err && err.code) || 'upstream_error';
+      if (code === 'conflict') {
+        // Someone published first. Every view is already reloading to the
+        // winner — nothing to retry, nothing to apologise for.
+        setStatus('saving');
+      } else if (code === 'not_writer' || code === 'not_granted' || code === 'consent_required' ||
+                 code === 'not_declared' || code === 'capability_disabled' || code === 'capability_removed') {
+        mode = 'readonly';
+        setStatus('readonly');
+        render();
+      } else if (code === 'rate_limited') {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(commit, 6000);
+        setStatus('pending');
+      } else if (code === 'upstream_error' && !retried) {
+        retried = true;
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(commit, 800 + Math.random() * 900);
+        setStatus('pending');
+      } else {
+        setStatus('error');
+      }
+    } finally {
+      saving = false;
+    }
+  }
+
+  /* ---------------- self-republishing ----------------
+     The canonical source is this document's own <style> and <script>
+     text plus the state JSON — never the live DOM, which carries viewer
+     session state and the shell's injected scripts.  */
+
+  function renderDocument(s) {
+    var css = document.getElementById('app-css').textContent;
+    var js = document.getElementById('app-js').textContent;
+    var json = JSON.stringify(s).replace(/</g, '\\u003c');
+    return [
+      '<!doctype html>',
+      '<html lang="en">',
+      '<head>',
+      '<meta charset="utf-8">',
+      '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
+      '<title>' + escapeHtml(s.challenge.name || 'Hard Enough') + '<\/title>',
+      '<meta name="apple-mobile-web-app-capable" content="yes">',
+      '<meta name="mobile-web-app-capable" content="yes">',
+      '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+      '<meta name="theme-color" content="#0B0E13">',
+      '<link rel="preconnect" href="https://fonts.googleapis.com">',
+      '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+      '<link rel="stylesheet" href="' + FONTS + '">',
+      '<style id="app-css">',
+      css,
+      '<\/style>',
+      '<\/head>',
+      '<body>',
+      '<div id="root"><\/div>',
+      '<script id="app-state" type="application/json">' + json + '<\/script>',
+      '<script id="app-js">',
+      js,
+      '<\/script>',
+      '<\/body>',
+      '<\/html>'
+    ].join('\n');
+  }
+
+  /* ---------------- view helpers ---------------- */
+
+  function escapeHtml(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function initials(name) {
+    var parts = String(name || '?').trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  function uid(prefix) {
+    return prefix + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+  }
+  function member(id) {
+    return state.members.filter(function (m) { return m.id === id; })[0] || null;
+  }
+  function plural(n, one, many) { return n === 1 ? one : many; }
+
+  var ICONS = {
+    check: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>',
+    today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15.5" r="1.9" fill="currentColor" stroke="none"/></svg>',
+    squad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 20c0-3.4 2.8-5.6 6.2-5.6s6.2 2.2 6.2 5.6"/><path d="M16.5 5.2a3.4 3.4 0 0 1 0 6.5M18 14.8c2.1.6 3.4 2.4 3.4 5.2"/></svg>',
+    grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2.4"/><rect x="14" y="3" width="7" height="7" rx="2.4"/><rect x="3" y="14" width="7" height="7" rx="2.4"/><rect x="14" y="14" width="7" height="7" rx="2.4"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17.5 7H20M4 17h3.5M12 17h8"/><circle cx="15.5" cy="7" r="2.5"/><circle cx="9.5" cy="17" r="2.5"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  };
+  var CHECK_SM = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>';
+
+  /* ---------------- gate ---------------- */
+
+  function viewGate() {
+    var c = state.challenge;
+    var first = state.members.length === 0;
+    var out = '<div class="gate">';
+    out += '<div class="eyebrow rise" style="--i:0">' + (first ? 'Day zero' : 'Welcome back') + '</div>';
+    out += '<h1 class="gate-title rise" style="--i:1">' + escapeHtml(c.name) + '</h1>';
+
+    if (first) {
+      out += '<p class="gate-sub rise" style="--i:2">75 Hard, scaled to something you will actually finish. ' +
+        c.days + ' days, ' + requiredIds(state).length + ' non-negotiables, and a board your friends can see.</p>';
+      out += '<div class="rules-peek rise" style="--i:3"><ul>' +
+        c.tasks.filter(function (t) { return t.required; }).map(function (t) {
+          return '<li>' + escapeHtml(t.label) + '</li>';
+        }).join('') + '</ul></div>';
+      out += '<div class="field rise" style="--i:4"><label for="gate-name">Your name</label>' +
+        '<input class="input" id="gate-name" placeholder="Nazia" autocomplete="given-name"></div>';
+      out += '<button class="btn primary block rise" data-act="join" style="--i:5;margin-top:14px">Start day 1</button>';
+      out += '<p class="footer-note rise" style="--i:6">You can change the day count and every rule once you are in.</p>';
+    } else {
+      out += '<p class="gate-sub rise" style="--i:2">Tap your name to pick up where you left off.</p>';
+      out += '<div class="who">';
+      state.members.forEach(function (m, i) {
+        var st = stats(state, m);
+        out += '<button class="who-btn rise" style="--i:' + (3 + i) + '" data-act="iam" data-id="' + escapeHtml(m.id) + '">' +
+          '<span class="av" style="background:' + escapeHtml(m.color) + '">' + escapeHtml(initials(m.name)) + '</span>' +
+          '<span style="flex:1;min-width:0"><span class="mate-name">' + escapeHtml(m.name) + '</span>' +
+          '<span class="who-sub">Day ' + st.current + ' of ' + st.total + ' · ' + st.done + ' done</span></span>' +
+          '</button>';
+      });
+      out += '</div>';
+      out += '<div class="field"><label for="gate-name">Not on the list?</label>' +
+        '<div class="inline"><input class="input" id="gate-name" placeholder="Your name">' +
+        '<button class="btn" data-act="join">Join</button></div></div>';
+    }
+    out += '</div>';
+    return out;
+  }
+
+  /* ---------------- today ---------------- */
+
+  function viewToday() {
+    var m = member(me);
+    var c = state.challenge;
+    var st = stats(state, m);
+    var today = todayKey();
+    var log = doneOn(state, me, today);
+    var complete = dayComplete(state, me, today);
+    var out = '';
+
+    var heroCls = 'hero rise' + (complete ? ' is-done' : '') + (st.notStarted || st.finished ? ' is-rest' : '');
+    var pill;
+    if (st.finished) pill = '<span class="pill go">Finished</span>';
+    else if (complete) pill = '<span class="pill go">Day complete</span>';
+    else if (log.length) pill = '<span class="pill warn">In progress</span>';
+    else pill = '<span class="pill flat">Not started</span>';
+
+    out += '<section class="' + heroCls + '" style="--i:0">';
+    out += '<div class="hero-head">';
+    out += '<div><div class="eyebrow">' + (st.finished ? 'You made it' : 'Day') + '</div>' +
+      '<div class="hero-num"><span class="daynum">' + (st.finished ? st.total : st.current) + '</span>' +
+      '<span class="day-of">/ ' + st.total + '</span></div></div>';
+    out += '<div style="text-align:right"><div class="hero-date">' + escapeHtml(prettyDate(today)) + '</div>' + pill + '</div>';
+    out += '</div>';
+    out += '<div class="chain-wrap"><div class="chain">' + chainTicks(m, st) + '</div>' +
+      '<div class="chain-legend"><span class="eyebrow">Day 1</span>' +
+      '<span class="eyebrow">' + st.done + ' done · ' + st.missed + ' missed</span>' +
+      '<span class="eyebrow">Day ' + st.total + '</span></div></div>';
+    out += '</section>';
+
+    if (st.finished) {
+      out += '<div class="note rise" style="--i:1"><b>' + st.done + ' of ' + st.total + ' days done.</b> ' +
+        'Start another round from Settings, or leave the board up as a receipt.</div>';
+    }
+
+    out += '<div class="tasks">';
+    c.tasks.forEach(function (t, i) {
+      var on = log.indexOf(t.id) !== -1;
+      out += '<button class="task rise' + (on ? ' on' : '') + (popId === t.id ? ' pop' : '') + '" style="--i:' + (i + 2) + '"' +
+        (mode === 'readonly' ? ' disabled' : '') +
+        ' data-act="toggle" data-task="' + escapeHtml(t.id) + '" data-date="' + today + '">' +
+        '<span class="box">' + ICONS.check + '</span>' +
+        '<span class="task-body">' +
+        '<span class="task-label">' + escapeHtml(t.label) +
+        (t.required ? '' : '<span class="tag-opt">Optional</span>') + '</span>' +
+        (t.detail ? '<span class="task-detail">' + escapeHtml(t.detail) + '</span>' : '') +
+        '</span></button>';
+    });
+    out += '</div>';
+    popId = null;
+
+    out += '<div class="summary rise" style="--i:' + (c.tasks.length + 2) + '">';
+    out += '<div class="stat go"><span class="stat-n">' + st.done + '</span><span class="stat-l">Done</span></div>';
+    out += '<div class="stat"><span class="stat-n">' + st.streak + '</span><span class="stat-l">Streak</span></div>';
+    out += '<div class="stat ' + (st.missed ? 'bad' : '') + '"><span class="stat-n">' + st.missed + '</span><span class="stat-l">Missed</span></div>';
+    out += '<div class="stat"><span class="stat-n">' + st.remaining + '</span><span class="stat-l">To go</span></div>';
+    out += '</div>';
+
+    if (c.reset.enabled) {
+      if (st.blown) {
+        out += '<div class="note alert"><b>You are past your ' + c.reset.allowance + '-miss allowance.</b> ' +
+          'The honest move is to restart from today — Settings has the button. Or raise the allowance; it is your challenge.</div>';
+      } else if (st.graceLeft <= 2 && st.dayIndex > 1) {
+        out += '<div class="note"><b>' + st.graceLeft + ' ' + plural(st.graceLeft, 'miss', 'misses') + ' left</b> before a restart. Tighten up.</div>';
+      }
+    }
+
+    if (mode === 'readonly') {
+      out += '<div class="note alert"><b>This board is read only for you.</b> ' +
+        'Ask whoever set it up to reshare the link with edit access, then your check-ins will save for everyone.</div>';
+    }
+    return out;
+  }
+
+  function chainTicks(m, st) {
+    var out = '';
+    for (var i = 1; i <= st.total; i++) {
+      var k = keyForDay(m, i);
+      var cls = 'tick';
+      if (i <= st.dayIndex) {
+        if (dayComplete(state, m.id, k)) cls += ' done';
+        else if (dayTouched(state, m.id, k)) cls += ' part';
+        else if (i < st.dayIndex) cls += ' miss';
+      }
+      if (i === st.dayIndex) cls += ' today';
+      out += '<span class="' + cls + '"></span>';
+    }
+    return out;
+  }
+
+  /* ---------------- squad ---------------- */
+
+  function viewSquad() {
+    var today = todayKey();
+    var ranked = state.members.map(function (m) { return { m: m, s: stats(state, m) }; })
+      .sort(function (a, b) {
+        if (b.s.done !== a.s.done) return b.s.done - a.s.done;
+        if (b.s.streak !== a.s.streak) return b.s.streak - a.s.streak;
+        return a.m.name.localeCompare(b.m.name);
+      });
+    var checkedIn = ranked.filter(function (r) { return dayTouched(state, r.m.id, today); }).length;
+
+    var out = '';
+    out += '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">The squad</div>' +
+      '<div class="title-xl">' + checkedIn + ' of ' + ranked.length + ' in today</div></div></div>';
+
+    out += '<div class="squad">';
+    ranked.forEach(function (r, i) {
+      var inToday = dayTouched(state, r.m.id, today);
+      var sub = r.s.streak > 0 ? r.s.streak + ' day streak'
+        : (r.s.missed > 0 ? r.s.missed + ' missed' : 'just started');
+      out += '<div class="mate rise' + (r.m.id === me ? ' me' : '') + '" style="--i:' + (i + 1) + '">' +
+        '<span class="rank">' + (i + 1) + '</span>' +
+        '<span class="av" style="background:' + escapeHtml(r.m.color) + '">' + escapeHtml(initials(r.m.name)) + '</span>' +
+        '<span class="mate-body">' +
+        '<span class="mate-name">' + escapeHtml(r.m.name) +
+        (r.m.id === me ? '<span class="you-tag">You</span>' : '') + '</span>' +
+        '<span class="mini">' + miniChain(r.m, r.s) + '</span>' +
+        '</span>' +
+        '<span class="mate-right"><span class="mate-day">' + r.s.done + '</span>' +
+        '<span class="today-tag' + (inToday ? ' in' : '') + '">' + (inToday ? 'In' : escapeHtml(sub)) + '</span></span>' +
+        '</div>';
+    });
+    out += '</div>';
+
+    out += '<div class="key">' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--go)"></span>Complete</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--warn)"></span>Partial</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--brand)"></span>Missed</span>' +
+      '</div>';
+
+    out += '<div class="divider"></div>';
+    out += '<div class="field"><label for="add-mate">Add someone</label>' +
+      '<div class="inline"><input class="input" id="add-mate" placeholder="Their name"' +
+      (mode === 'readonly' ? ' disabled' : '') + '>' +
+      '<button class="btn" data-act="add-mate"' + (mode === 'readonly' ? ' disabled' : '') + '>Add</button></div></div>';
+    out += '<p class="footer-note">' + (mode === 'shared'
+      ? 'Everyone opening this link sees the same board and picks their own name on first visit.'
+      : 'This copy saves to this phone only, so anyone you add here is yours to tick off.') + '</p>';
+    return out;
+  }
+
+  function miniChain(m, st) {
+    var out = '';
+    for (var i = 1; i <= st.total; i++) {
+      var k = keyForDay(m, i);
+      var cls = '';
+      if (i <= st.dayIndex) {
+        if (dayComplete(state, m.id, k)) cls = 'done';
+        else if (dayTouched(state, m.id, k)) cls = 'part';
+        else if (i < st.dayIndex) cls = 'miss';
+      }
+      out += '<span class="' + cls + '"></span>';
+    }
+    return out;
+  }
+
+  /* ---------------- the card ---------------- */
+
+  function viewGrid() {
+    var m = member(me);
+    var st = stats(state, m);
+    var out = '';
+    out += '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">The card</div>' +
+      '<div class="title-xl">' + st.done + ' of ' + st.total + ' punched</div></div></div>';
+
+    out += '<div class="grid rise" style="--i:1">';
+    for (var i = 1; i <= st.total; i++) {
+      var k = keyForDay(m, i);
+      var cls = 'cell';
+      var mark = '';
+      if (i > st.dayIndex) cls += ' future';
+      else if (dayComplete(state, m.id, k)) { cls += ' done'; mark = CHECK_SM; }
+      else if (dayTouched(state, m.id, k)) { cls += ' part'; mark = doneOn(state, m.id, k).length; }
+      else if (i < st.dayIndex) { cls += ' miss'; mark = '&times;'; }
+      if (i === st.dayIndex) cls += ' today';
+      out += '<button class="' + cls + '" data-act="open-day" data-day="' + i + '" aria-label="Day ' + i + '">' +
+        '<span class="n">' + i + '</span>' + (mark ? '<span class="m">' + mark + '</span>' : '') +
+        '</button>';
+    }
+    out += '</div>';
+
+    out += '<div class="key">' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--go)"></span>Complete</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--warn)"></span>Partial</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:var(--brand)"></span>Missed</span>' +
+      '<span class="key-item"><span class="key-sw" style="background:transparent;border:1px dashed var(--hairline)"></span>Ahead</span>' +
+      '</div>';
+
+    if (openDay) out += viewDaySheet(m, openDay);
+    else out += '<p class="footer-note">Tap any day to fill it in after the fact.</p>';
+    return out;
+  }
+
+  function viewDaySheet(m, n) {
+    var k = keyForDay(m, n);
+    var log = doneOn(state, m.id, k);
+    var out = '<div class="divider"></div>';
+    out += '<div class="section-head"><div><div class="eyebrow">' + escapeHtml(prettyDate(k)) + '</div>' +
+      '<div class="title-xl">Day ' + n + '</div></div>' +
+      '<button class="btn sm" data-act="close-day">Close</button></div>';
+    out += '<div class="tasks" style="margin-top:0">';
+    state.challenge.tasks.forEach(function (t, i) {
+      var on = log.indexOf(t.id) !== -1;
+      out += '<button class="task rise' + (on ? ' on' : '') + '" style="--i:' + i + '"' +
+        (mode === 'readonly' ? ' disabled' : '') +
+        ' data-act="toggle" data-task="' + escapeHtml(t.id) + '" data-date="' + k + '">' +
+        '<span class="box">' + ICONS.check + '</span>' +
+        '<span class="task-body"><span class="task-label">' + escapeHtml(t.label) +
+        (t.required ? '' : '<span class="tag-opt">Optional</span>') + '</span></span></button>';
+    });
+    out += '</div>';
+    return out;
+  }
+
+  /* ---------------- settings ---------------- */
+
+  function viewSettings() {
+    var c = state.challenge;
+    var m = member(me);
+    var out = '';
+
+    out += '<div class="section-head rise" style="--i:0"><div><div class="eyebrow">Settings</div>' +
+      '<div class="title-xl">Your rules</div></div>' +
+      '<button class="btn sm" data-act="tab" data-tab="today">Done</button></div>';
+
+    out += '<div class="field"><label for="f-name">Challenge name</label>' +
+      '<input class="input" id="f-name" data-field="name" value="' + escapeHtml(c.name) + '"></div>';
+    out += '<div class="field"><label for="f-days">How many days</label>' +
+      '<input class="input" id="f-days" data-field="days" type="number" inputmode="numeric" min="1" max="365" value="' + c.days + '"></div>';
+    out += '<div class="field"><label for="f-start">Your day 1</label>' +
+      '<input class="input" id="f-start" data-field="startDate" type="date" value="' + escapeHtml(m.startDate) + '">' +
+      '<span class="hint">Everyone counts from their own start date, so friends can join late without wrecking the board.</span></div>';
+
+    out += '<div class="divider"></div>';
+    out += '<div class="section-head"><div class="eyebrow">The daily list</div>' +
+      '<button class="btn sm ghost" data-act="add-task">Add a task</button></div>';
+    c.tasks.forEach(function (t) {
+      out += '<div class="editrow">' +
+        '<div class="grow">' +
+        '<input class="input" data-task-field="label" data-task="' + escapeHtml(t.id) + '" value="' + escapeHtml(t.label) + '" placeholder="What you have to do">' +
+        '<input class="input small" data-task-field="detail" data-task="' + escapeHtml(t.id) + '" value="' + escapeHtml(t.detail || '') + '" placeholder="A note to yourself (optional)">' +
+        '</div>' +
+        '<div class="stack" style="gap:7px;align-items:flex-end">' +
+        '<button class="reqtoggle' + (t.required ? ' on' : '') + '" data-act="req" data-task="' + escapeHtml(t.id) + '">' +
+        (t.required ? 'Required' : 'Optional') + '</button>' +
+        '<button class="xbtn" data-act="del-task" data-task="' + escapeHtml(t.id) + '" aria-label="Remove task">' + ICONS.x + '</button>' +
+        '</div></div>';
+    });
+    out += '<p class="footer-note left">A day counts as complete when every <b>required</b> task is ticked. Optional ones are there for credit, not pressure.</p>';
+
+    out += '<div class="divider"></div>';
+    out += '<div class="section-head"><div class="eyebrow">When you miss a day</div></div>';
+    out += '<div class="field"><label for="f-reset">Policy</label>' +
+      '<select class="input" id="f-reset" data-field="reset">' +
+      '<option value="off"' + (!c.reset.enabled ? ' selected' : '') + '>Nothing resets — just keep tracking</option>' +
+      '<option value="0"' + (c.reset.enabled && c.reset.allowance === 0 ? ' selected' : '') + '>Strict — one miss and you restart</option>' +
+      '<option value="3"' + (c.reset.enabled && c.reset.allowance === 3 ? ' selected' : '') + '>3 misses allowed</option>' +
+      '<option value="5"' + (c.reset.enabled && c.reset.allowance === 5 ? ' selected' : '') + '>5 misses allowed</option>' +
+      '<option value="10"' + (c.reset.enabled && c.reset.allowance === 10 ? ' selected' : '') + '>10 misses allowed</option>' +
+      '</select></div>';
+
+    out += '<div class="divider"></div>';
+    out += '<div class="section-head"><div class="eyebrow">Everyone on the board</div></div>';
+    state.members.forEach(function (mm) {
+      out += '<div class="editrow" style="align-items:center">' +
+        '<span class="av" style="background:' + escapeHtml(mm.color) + '">' + escapeHtml(initials(mm.name)) + '</span>' +
+        '<div class="grow"><input class="input" data-mate-field="name" data-id="' + escapeHtml(mm.id) + '" value="' + escapeHtml(mm.name) + '"></div>' +
+        (mm.id === me ? '<span class="chip">You</span>'
+          : '<button class="btn sm" data-act="iam" data-id="' + escapeHtml(mm.id) + '">This is me</button>') +
+        '<button class="xbtn" data-act="del-mate" data-id="' + escapeHtml(mm.id) + '" aria-label="Remove person">' + ICONS.x + '</button>' +
+        '</div>';
+    });
+
+    out += '<div class="divider"></div>';
+    out += '<div class="section-head"><div class="eyebrow">Start over</div></div>';
+    out += '<button class="btn danger block" data-act="restart">Restart me from today</button>';
+    out += '<p class="footer-note left">Sets your day 1 to today and clears your ticks. Nobody else is touched.</p>';
+    out += '<p class="footer-note">' + (mode === 'shared'
+      ? 'Saved for the whole squad the moment you stop typing.'
+      : 'Saved to this phone only.') + '</p>';
+    return out;
+  }
+
+  /* ---------------- shell ---------------- */
+
+  function viewShell(inner) {
+    var c = state.challenge;
+    var out = '<div class="app">';
+    out += '<header class="topbar">' +
+      '<div class="brand"><span class="brand-dot"></span><span class="brand-name">' + escapeHtml(c.name) + '</span></div>' +
+      '<div class="topbar-actions">' +
+      '<button class="chip" id="status-chip" data-state="' + status + '" data-act="save-now">' + statusLabel(status) + '</button>' +
+      '<button class="icon-btn" data-act="tab" data-tab="settings" aria-label="Settings">' + ICONS.gear + '</button>' +
+      '</div></header>';
+    out += '<main>' + inner + '</main></div>';
+
+    if (tab !== 'settings') {
+      out += '<nav class="tabbar"><div class="tabbar-inner">' +
+        tabBtn('today', 'Today', ICONS.today) +
+        tabBtn('squad', 'Squad', ICONS.squad) +
+        tabBtn('grid', 'Card', ICONS.grid) +
+        '</div></nav>';
+    }
+    return out;
+  }
+  function tabBtn(id, label, icon) {
+    return '<button class="tab' + (tab === id ? ' on' : '') + '" data-act="tab" data-tab="' + id + '"' +
+      (tab === id ? ' aria-current="page"' : '') + '>' + icon + '<span>' + label + '</span></button>';
+  }
+
+  function render() {
+    var root = document.getElementById('root');
+    if (!me || !member(me)) {
+      root.innerHTML = '<div class="app">' + viewGate() + '</div>';
+      return;
+    }
+    var inner;
+    if (tab === 'squad') inner = viewSquad();
+    else if (tab === 'grid') inner = viewGrid();
+    else if (tab === 'settings') inner = viewSettings();
+    else inner = viewToday();
+    root.innerHTML = viewShell(inner);
+  }
+
+  /* ---------------- actions ---------------- */
+
+  function addMember(name, makeMe) {
+    name = String(name || '').trim();
+    if (!name) return null;
+    var m = {
+      id: uid('m'),
+      name: name.slice(0, 40),
+      color: COLORS[state.members.length % COLORS.length],
+      startDate: todayKey()
+    };
+    state.members.push(m);
+    if (makeMe) {
+      me = m.id;
+      try { localStorage.setItem(LS_ME, me); } catch (e) { /* ignore */ }
+    }
+    scheduleSave();
+    return m;
+  }
+
+  function toggleTask(memberId, dateKey, taskId) {
+    if (!state.log[memberId]) state.log[memberId] = {};
+    var day = state.log[memberId][dateKey] || [];
+    var i = day.indexOf(taskId);
+    if (i === -1) day.push(taskId); else day.splice(i, 1);
+    if (day.length) state.log[memberId][dateKey] = day;
+    else delete state.log[memberId][dateKey];
+    scheduleSave();
+  }
+
+  function onClick(e) {
+    var el = e.target.closest('[data-act]');
+    if (!el || el.disabled) return;
+    var act = el.dataset.act;
+
+    if (act === 'tab') {
+      tab = el.dataset.tab;
+      openDay = null;
+      render();
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    if (act === 'join') {
+      var input = document.getElementById('gate-name');
+      if (!addMember(input && input.value, true)) { if (input) input.focus(); return; }
+      render();
+      return;
+    }
+
+    if (act === 'iam') {
+      me = el.dataset.id;
+      try { localStorage.setItem(LS_ME, me); } catch (err) { /* ignore */ }
+      tab = 'today';
+      render();
+      return;
+    }
+
+    if (act === 'add-mate') {
+      var mi = document.getElementById('add-mate');
+      if (!addMember(mi && mi.value, false)) { if (mi) mi.focus(); return; }
+      render();
+      return;
+    }
+
+    if (act === 'toggle') {
+      popId = el.dataset.task;
+      toggleTask(me, el.dataset.date, el.dataset.task);
+      var y = window.scrollY;
+      render();
+      window.scrollTo(0, y);
+      return;
+    }
+
+    if (act === 'open-day') { openDay = Number(el.dataset.day); render(); return; }
+    if (act === 'close-day') { openDay = null; render(); return; }
+
+    if (act === 'req') {
+      var t = state.challenge.tasks.filter(function (x) { return x.id === el.dataset.task; })[0];
+      if (t) { t.required = !t.required; scheduleSave(); render(); }
+      return;
+    }
+
+    if (act === 'add-task') {
+      state.challenge.tasks.push({ id: uid('t'), label: '', detail: '', required: true });
+      scheduleSave();
+      render();
+      var inputs = document.querySelectorAll('[data-task-field="label"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+      return;
+    }
+
+    if (act === 'del-task') {
+      state.challenge.tasks = state.challenge.tasks.filter(function (x) { return x.id !== el.dataset.task; });
+      scheduleSave();
+      render();
+      return;
+    }
+
+    if (act === 'del-mate') {
+      var id = el.dataset.id;
+      state.members = state.members.filter(function (x) { return x.id !== id; });
+      delete state.log[id];
+      if (me === id) {
+        me = null;
+        try { localStorage.removeItem(LS_ME); } catch (err) { /* ignore */ }
+      }
+      scheduleSave();
+      render();
+      return;
+    }
+
+    if (act === 'restart') {
+      var mm = member(me);
+      if (!mm) return;
+      mm.startDate = todayKey();
+      state.log[me] = {};
+      scheduleSave();
+      tab = 'today';
+      render();
+      return;
+    }
+
+    if (act === 'save-now') {
+      clearTimeout(saveTimer);
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      commit();
+    }
+  }
+
+  function onInput(e) {
+    var el = e.target;
+
+    if (el.dataset.field) {
+      var f = el.dataset.field;
+      if (f === 'name') state.challenge.name = el.value.slice(0, 60);
+      else if (f === 'days') {
+        var n = parseInt(el.value, 10);
+        if (n >= 1 && n <= 365) state.challenge.days = n;
+      } else if (f === 'startDate') {
+        var mm = member(me);
+        if (mm && /^\d{4}-\d{2}-\d{2}$/.test(el.value)) mm.startDate = el.value;
+      } else if (f === 'reset') {
+        if (el.value === 'off') state.challenge.reset = { enabled: false, allowance: 0 };
+        else state.challenge.reset = { enabled: true, allowance: parseInt(el.value, 10) };
+      }
+      scheduleSave(1800);
+      return;
+    }
+
+    if (el.dataset.taskField) {
+      var t = state.challenge.tasks.filter(function (x) { return x.id === el.dataset.task; })[0];
+      if (t) {
+        if (el.dataset.taskField === 'label') t.label = el.value.slice(0, 80);
+        else t.detail = el.value.slice(0, 140);
+        scheduleSave(1800);
+      }
+      return;
+    }
+
+    if (el.dataset.mateField === 'name') {
+      var m2 = member(el.dataset.id);
+      if (m2) { m2.name = el.value.slice(0, 40); scheduleSave(1800); }
+    }
+  }
+
+  function onKey(e) {
+    if (e.key !== 'Enter') return;
+    var id = e.target.id;
+    if (id === 'gate-name' || id === 'add-mate') {
+      e.preventDefault();
+      var btn = document.querySelector(id === 'gate-name' ? '[data-act="join"]' : '[data-act="add-mate"]');
+      if (btn) btn.click();
+    }
+  }
+
+  /* ---------------- boot ---------------- */
+
+  (async function boot() {
+    await initStorage();
+    setStatus('idle');
+    render();
+    document.addEventListener('click', onClick);
+    document.addEventListener('input', onInput);
+    document.addEventListener('keydown', onKey);
+    // A blur means the user stopped typing — flush without waiting out the debounce.
+    document.addEventListener('focusout', function () {
+      if (status === 'pending') scheduleSave(350);
+    });
+  })();
+})();
+</script>
