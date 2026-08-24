@@ -593,6 +593,7 @@ select.input{appearance:none}
   var state = null, mode = 'local', me = null, tab = 'today', boardId = null;
   var status = 'idle', inflight = 0, saveTimer = null, pollTimer = null, lastTouch = 0;
   var popId = null, openDay = null, gatePlan = '', woForm = null, selBar = null, copyBox = null, linkBox = null;
+  var needBoard = false, joinError = '';
 
   /* ---- REST plumbing ---- */
   async function sbFetch(path, opts) {
@@ -702,21 +703,32 @@ select.input{appearance:none}
     if (SUPABASE.url) {
       try {
         if (!boardId) {
-          boardId = newSlug();
-          await sbFetch('boards', { method: 'POST', body: { id: boardId, challenge: defaultState().challenge } });
+          // No link, no memory: ASK. Silently making a new board here is how
+          // five people each ended up alone on five different boards.
+          mode = 'cloud';
+          needBoard = true;
+          state = migrate(defaultState());
+          setStatus('idle');
+          return;
         }
         var loaded = await loadBoard();
-        if (!loaded) {   // the id in the link no longer exists -- create it
-          await sbFetch('boards', { method: 'POST', body: { id: boardId, challenge: defaultState().challenge } });
-          loaded = await loadBoard();
-        }
-        if (loaded) {
-          state = loaded;
+        if (!loaded) {
+          // The code was mistyped, or the board is gone. Ask rather than
+          // quietly starting a fresh one under the same name.
           mode = 'cloud';
-          stampHash();
+          needBoard = true;
+          joinError = 'No board with the code ' + boardId + '.';
+          boardId = null;
+          try { localStorage.removeItem(LS_BOARD); } catch (e) { /* ignore */ }
+          state = migrate(defaultState());
           setStatus('idle');
-          schedulePoll();
+          return;
         }
+        state = loaded;
+        mode = 'cloud';
+        stampHash();
+        setStatus('idle');
+        schedulePoll();
       } catch (err) {
         if (window.console) console.warn('[hard-enough] cloud unavailable:', err && err.message);
       }
@@ -989,6 +1001,24 @@ select.input{appearance:none}
     autoTickWorkouts(memberId, dateKey);
     dropWorkout(id);
     pushCheckin(memberId, dateKey);
+  }
+
+  /* ---------------- choose a board ---------------- */
+
+  function viewChooseBoard() {
+    var out = '<div class="gate"><div class="gate-mark">Hard Enough</div>';
+    out += '<div class="eyebrow rise" style="--i:0">Before you start</div>';
+    out += '<h1 class="gate-title rise" style="--i:1">Which board?</h1>';
+    out += '<p class="gate-sub rise" style="--i:2">Everyone in a squad has to be on the <b>same</b> board. ' +
+      'If a friend already started one, join theirs — do not start a second.</p>';
+    if (joinError) out += '<div class="note alert rise" style="--i:3">' + escapeHtml(joinError) + '</div>';
+    out += '<div class="field rise" style="--i:4"><label for="join-code">Join your squad</label>' +
+      '<input class="input" id="join-code" placeholder="Paste the link or the code" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+      '<button class="btn primary block" data-act="join-board" style="margin-top:8px">Join that board</button></div>';
+    out += '<div class="rule"></div>';
+    out += '<button class="btn ghost block" data-act="new-board" style="margin-top:16px">Start a new board</button>';
+    out += '<p class="footer-note rise" style="--i:5">Only one person should start the board. Everyone else joins it.</p>';
+    return out + '</div>';
   }
 
   /* ---------------- gate ---------------- */
@@ -1394,12 +1424,16 @@ select.input{appearance:none}
     out += '<div class="rule"></div>';
     out += '<div class="pill-label" style="margin-top:16px">Invite the squad</div>';
     if (mode === 'cloud') {
-      out += '<button class="btn primary block" data-act="copy-link" style="margin-top:11px">Copy the board link</button>';
+      out += '<div class="kpi three" style="grid-template-columns:1fr;margin-top:11px">' +
+        '<div class="k"><div class="kn" style="font-family:var(--mono);font-size:19px;letter-spacing:.06em">' +
+        escapeHtml(boardId) + '</div><div class="kl">Board code — everyone needs this one</div></div></div>';
+      out += '<button class="btn primary block" data-act="copy-link" style="margin-top:9px">Copy the board link</button>';
       if (linkBox) {
         out += '<textarea class="copybox" id="link-out" readonly>' + escapeHtml(boardLink()) + '</textarea>';
       }
-      out += '<p class="footer-note left">Anyone with this link is on the board — they open it, tap ' +
-        '<b>Not on the list?</b> and add their name. No account needed. Keep it to the group: the link is the only thing guarding it.</p>';
+      out += '<p class="footer-note left">Send the <b>whole link</b>, ending in <b>#' + escapeHtml('b=' + boardId) + '</b>. ' +
+        'If it arrives without that bit, they can type the code above instead. Opening the plain address puts them on a ' +
+        'board of their own, which is the one way to end up unable to see each other.</p>';
     } else {
       out += '<p class="footer-note left">Not connected to the shared board, so this device is tracking on its own. ' +
         'Check your connection and reopen — nothing you have logged is lost.</p>';
@@ -1574,6 +1608,7 @@ select.input{appearance:none}
 
   function render() {
     var root = document.getElementById('root');
+    if (needBoard) { root.innerHTML = '<div class="app">' + viewChooseBoard() + '</div>'; return; }
     if (!me || !member(me)) { root.innerHTML = '<div class="app">' + viewGate() + '</div>'; return; }
     var inner;
     if (tab === 'train') inner = viewTrain();
@@ -1735,6 +1770,43 @@ select.input{appearance:none}
       clearMemberRows(me); pushMember(mm); tab = 'today'; render();
       return;
     }
+    if (act === 'new-board') {
+      el.disabled = true;
+      boardId = newSlug();
+      sbFetch('boards', { method: 'POST', body: { id: boardId, challenge: defaultState().challenge } })
+        .then(loadBoard)
+        .then(function (loaded) {
+          if (!loaded) throw new Error('could not create');
+          state = loaded; needBoard = false; joinError = ''; mode = 'cloud';
+          stampHash(); setStatus('saved'); schedulePoll(); render();
+        })
+        .catch(function () { joinError = 'Could not reach the board. Check your connection and try again.'; render(); });
+      return;
+    }
+
+    if (act === 'join-board') {
+      var field = document.getElementById('join-code');
+      var raw = field ? String(field.value).trim() : '';
+      // accept a pasted link or a bare code
+      var code = (raw.match(/b=([A-Za-z0-9_-]{6,40})/) || [])[1] ||
+                 (/^[A-Za-z0-9_-]{6,40}$/.test(raw) ? raw : '');
+      if (!code) { joinError = 'That does not look like a board link or code.'; render(); return; }
+      el.disabled = true;
+      boardId = code;
+      loadBoard().then(function (loaded) {
+        if (!loaded) {
+          joinError = 'No board with the code ' + code + '. Check it with whoever started it.';
+          boardId = null; render(); return;
+        }
+        state = loaded; needBoard = false; joinError = ''; mode = 'cloud';
+        stampHash(); setStatus('saved'); schedulePoll(); render();
+      }).catch(function () {
+        joinError = 'Could not reach the board. Check your connection.';
+        boardId = null; render();
+      });
+      return;
+    }
+
     if (act === 'copy-link') {
       var link = boardLink();
       var show = function (ok) { linkBox = ok ? 'copied' : 'manual'; keepScroll(function () {}); };
@@ -1802,6 +1874,12 @@ select.input{appearance:none}
   function onKey(e) {
     if (e.key !== 'Enter') return;
     var id = e.target.id;
+    if (id === 'join-code') {
+      e.preventDefault();
+      var jb = document.querySelector('[data-act="join-board"]');
+      if (jb) jb.click();
+      return;
+    }
     if (id === 'gate-name' || id === 'gate-plan-custom' || id === 'add-mate') {
       e.preventDefault();
       var btn = document.querySelector(id === 'add-mate' ? '[data-act="add-mate"]' : '[data-act="join"]');

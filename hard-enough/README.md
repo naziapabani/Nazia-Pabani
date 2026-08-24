@@ -126,9 +126,17 @@ sign-in, works on any phone, and it installs to the home screen properly
 (Safari → Share → Add to Home Screen) — full screen, no browser chrome.
 
 **The board id lives in the URL fragment**, e.g. `.../hard-enough/#b=k7f2mq9x4v`.
-That link is the credential and is never committed. Open the bare URL with no
-fragment and you get a brand new board; the last one you used is remembered on
-the device, so reopening the app doesn't strand you.
+That link is the credential and is never committed.
+
+Opening the plain address does **not** create a board. It asks: start a new one,
+or join an existing one by pasting the link or typing the board code. An earlier
+version created a board silently, and the result was five people each alone on
+five different boards, unable to see each other and with no clue why — the app
+looked like it was working perfectly for every one of them.
+
+A code that doesn't exist says so rather than quietly starting a fresh board
+under that name. The Squad tab shows the code as text as well as the link,
+because a code survives being pasted anywhere a URL fragment might get trimmed.
 
 If Supabase can't be reached the app falls back to `localStorage` on that device
 and says so in the status chip, rather than appearing to work and losing writes.
