@@ -119,54 +119,38 @@ Misses are the separate, unplanned case: skip a day without booking it off and i
 counts against the miss allowance. Both budgets are configurable, and the reset
 can be switched off entirely.
 
-## Two ways to run it
+## How it's hosted
 
-### 1. Shared board (what you want for a group)
+One static file on GitHub Pages, syncing to Supabase. No Claude account, no
+sign-in, works on any phone, and it installs to the home screen properly
+(Safari → Share → Add to Home Screen) — full screen, no browser chrome.
 
-Published as a Claude Artifact. Every check-in publishes a new version of the
-page, so all of you read and write the same board — open the link, tap your
-name, and you're on it.
+**The board id lives in the URL fragment**, e.g. `.../hard-enough/#b=k7f2mq9x4v`.
+That link is the credential and is never committed. Open the bare URL with no
+fragment and you get a brand new board; the last one you used is remembered on
+the device, so reopening the app doesn't strand you.
 
-Your friends need **edit access** to the artifact for their check-ins to save.
-Share it from the page's share menu with editing turned on; anyone with view-only
-access sees the board but gets a "read only" banner instead of working
-checkboxes.
-
-### 2. Standalone copy (one phone, no server)
-
-Open `index.html` from anywhere — a local file, GitHub Pages, any static host.
-It detects there's no shared backend and saves to `localStorage` on that device
-instead. Same app, no sharing.
-
-To put it on your home screen: open it in Safari on iPhone → Share → **Add to
-Home Screen**. It gets its own icon and opens full screen with no browser bars.
-
-## Editing it
-
-`index.html` is the canonical source and a complete standalone document.
-`artifact.html` is generated from it — the Artifact host wraps published files in
-its own `<head>`/`<body>`, so that copy has to be content-only.
-
-```sh
-# after editing index.html
-python3 build-artifact.py
-```
-
-Then republish `artifact.html` to the same artifact URL. Never edit
-`artifact.html` directly; it gets overwritten.
+If Supabase can't be reached the app falls back to `localStorage` on that device
+and says so in the status chip, rather than appearing to work and losing writes.
 
 ## How the shared board works
 
-The page holds the whole squad's state as JSON inside its own HTML. On a
-check-in it regenerates a complete replacement document from its own `<style>`
-and `<script>` text plus the new state, and publishes that. Every open view
-reloads to the winner.
+Every check-in is its **own row**. Two people ticking a box in the same second
+touch different rows, so there is no conflict to resolve and no last-write-wins
+clobbering — which is precisely what the earlier Artifact version had to be
+designed around.
 
-Writes are compare-and-set. If two people check in at once, one gets a
-`conflict`, both views reload to the version that landed, and the loser just taps
-again — there's no retry loop and nothing to apologise for. Saves are debounced
-about a second, and never fire while a text field has focus, so typing in
-Settings can't get interrupted by a reload.
+Reads pull the whole board in two requests (the second uses a nested select to
+bring back members with their check-ins, rest days and workouts at once).
+
+Updates arrive by polling: every 4s while the app is in use, 20s once idle,
+paused entirely when the tab is hidden, and immediately on tab switch or when
+the app comes back to the foreground.
+
+A poll never lands on top of an unsaved edit. Text fields are debounced, and
+while that debounce or any write is in flight the poll is skipped — without that
+guard, changing a setting and having a refresh arrive first silently reverts what
+you typed.
 
 ## Notes
 

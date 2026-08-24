@@ -572,16 +572,79 @@ select.input{appearance:none}
     };
   }
 
-  /* ---------------- state + storage ---------------- */
+  /* ---------------- state + storage ----------------
+     The board lives in Supabase. Check-ins are ROWS, not one document, so
+     two people ticking a box in the same second touch different rows and
+     there is nothing to conflict over.
 
-  var state = null, mode = 'local', artifactApi = null, me = null, tab = 'today';
-  var saveTimer = null, saving = false, retried = false, status = 'idle';
-  var popId = null, openDay = null, gatePlan = '', woForm = null, selBar = null, copyBox = null;
+     The board id rides in the URL fragment (#b=...) and is never committed:
+     the anon key below is public by design and sits in the page source
+     either way, so the link is what actually guards the board. */
 
-  function readEmbedded() {
-    var el = document.getElementById('app-state');
-    if (!el) return null;
-    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+  var SUPABASE = {
+    url: 'https://uwwcchslelxnyarjjosk.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3d2NjaHNsZWx4bnlhcmpqb3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODY5NDAsImV4cCI6MjEwMzE2Mjk0MH0.1brbhXxmjPlPoCaHGzebbM_eqdHrdZxug5IOeeAQI1o'
+  };
+
+  var LS_KEY = 'hard-enough:state';
+  var LS_ME = 'hard-enough:me';
+  var LS_BOARD = 'hard-enough:board';
+
+  var state = null, mode = 'local', me = null, tab = 'today', boardId = null;
+  var status = 'idle', inflight = 0, saveTimer = null, pollTimer = null, lastTouch = 0;
+  var popId = null, openDay = null, gatePlan = '', woForm = null, selBar = null, copyBox = null, linkBox = null;
+
+  /* ---- REST plumbing ---- */
+  async function sbFetch(path, opts) {
+    opts = opts || {};
+    var headers = {
+      apikey: SUPABASE.key,
+      Authorization: 'Bearer ' + SUPABASE.key,
+      'Content-Type': 'application/json'
+    };
+    if (opts.prefer) headers.Prefer = opts.prefer;
+    var res = await fetch(SUPABASE.url + '/rest/v1/' + path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    if (!res.ok) throw new Error('supabase ' + res.status + ': ' + (await res.text()).slice(0, 140));
+    if (res.status === 204) return null;
+    var txt = await res.text();
+    return txt ? JSON.parse(txt) : null;
+  }
+
+  function track(promise) {
+    inflight++;
+    lastTouch = Date.now();
+    setStatus('saving');
+    return promise.then(function (r) {
+      if (--inflight <= 0) { inflight = 0; setStatus('saved'); }
+      return r;
+    }, function (err) {
+      if (--inflight <= 0) inflight = 0;
+      setStatus('error');
+      if (window.console) console.warn('[hard-enough]', err && err.message);
+    });
+  }
+
+  /* ---- board identity ---- */
+  function readBoardId() {
+    var m = String(location.hash || '').match(/b=([A-Za-z0-9_-]{6,40})/);
+    return m ? m[1] : null;
+  }
+  function newSlug() {
+    var out = '', abc = 'abcdefghijkmnpqrstuvwxyz23456789';
+    for (var i = 0; i < 12; i++) out += abc.charAt(Math.floor(Math.random() * abc.length));
+    return out;
+  }
+  function stampHash() {
+    try { history.replaceState(null, '', location.pathname + location.search + '#b=' + boardId); }
+    catch (e) { location.hash = 'b=' + boardId; }
+    try { localStorage.setItem(LS_BOARD, boardId); } catch (e) { /* private mode */ }
+  }
+  function boardLink() {
+    return location.origin + location.pathname + '#b=' + boardId;
   }
 
   function migrate(s) {
@@ -605,114 +668,182 @@ select.input{appearance:none}
     return s;
   }
 
-  async function initStorage() {
-    try {
-      if (window.claude && typeof window.claude.use === 'function') artifactApi = await window.claude.use('artifact');
-    } catch (e) { artifactApi = null; }
-
-    if (artifactApi) {
-      mode = 'shared';
-      state = migrate(readEmbedded() || defaultState());
-    } else {
-      mode = 'local';
-      var raw = null;
-      try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
-      try { state = migrate(raw ? JSON.parse(raw) : (readEmbedded() || defaultState())); }
-      catch (e) { state = migrate(readEmbedded() || defaultState()); }
-    }
-
-    try { me = localStorage.getItem(LS_ME); } catch (e) { me = null; }
-    if (me && !state.members.some(function (m) { return m.id === me; })) me = null;
-
-    try {
-      var stash = sessionStorage.getItem('hard-enough:ui');
-      if (stash) { var ui = JSON.parse(stash); if (ui.tab) tab = ui.tab; sessionStorage.removeItem('hard-enough:ui'); }
-    } catch (e) { /* private mode can throw */ }
+  /* ---- load the whole board in two requests ---- */
+  async function loadBoard() {
+    var boards = await sbFetch('boards?select=id,challenge&id=eq.' + encodeURIComponent(boardId));
+    if (!boards || !boards.length) return null;
+    var rows = await sbFetch('members?select=id,name,color,plan,start_date,' +
+      'checkins(day,task_ids),rest_days(day),workouts(id,day,type,min,kcal,hr)' +
+      '&board_id=eq.' + encodeURIComponent(boardId) + '&order=created_at.asc');
+    var s = { v: 3, challenge: boards[0].challenge || {}, members: [], log: {}, rest: {}, workouts: {} };
+    (rows || []).forEach(function (r) {
+      s.members.push({ id: r.id, name: r.name, color: r.color, plan: r.plan || '', startDate: r.start_date });
+      (r.checkins || []).forEach(function (c) {
+        (s.log[r.id] = s.log[r.id] || {})[c.day] = c.task_ids || [];
+      });
+      (r.rest_days || []).forEach(function (d) {
+        (s.rest[r.id] = s.rest[r.id] || []).push(d.day);
+      });
+      (r.workouts || []).forEach(function (w) {
+        var byDay = (s.workouts[r.id] = s.workouts[r.id] || {});
+        (byDay[w.day] = byDay[w.day] || []).push({ id: w.id, type: w.type, min: w.min, kcal: w.kcal, hr: w.hr });
+      });
+    });
+    return migrate(s);
   }
 
+  async function initStorage() {
+    try { me = localStorage.getItem(LS_ME); } catch (e) { me = null; }
+
+    var stored = null;
+    try { stored = localStorage.getItem(LS_BOARD); } catch (e) { stored = null; }
+    boardId = readBoardId() || stored;
+
+    if (SUPABASE.url) {
+      try {
+        if (!boardId) {
+          boardId = newSlug();
+          await sbFetch('boards', { method: 'POST', body: { id: boardId, challenge: defaultState().challenge } });
+        }
+        var loaded = await loadBoard();
+        if (!loaded) {   // the id in the link no longer exists -- create it
+          await sbFetch('boards', { method: 'POST', body: { id: boardId, challenge: defaultState().challenge } });
+          loaded = await loadBoard();
+        }
+        if (loaded) {
+          state = loaded;
+          mode = 'cloud';
+          stampHash();
+          setStatus('idle');
+          schedulePoll();
+        }
+      } catch (err) {
+        if (window.console) console.warn('[hard-enough] cloud unavailable:', err && err.message);
+      }
+    }
+
+    if (mode !== 'cloud') {           // offline or misconfigured: this device only
+      var raw = null;
+      try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
+      try { state = migrate(raw ? JSON.parse(raw) : defaultState()); }
+      catch (e) { state = migrate(defaultState()); }
+    }
+
+    if (me && !member(me)) me = null;
+  }
+
+  /* ---- status ---- */
   function statusLabel(s) {
-    if (s === 'pending') return 'Unsaved';
     if (s === 'saving') return 'Saving';
     if (s === 'saved') return 'Saved';
-    if (s === 'readonly') return 'Read only';
-    if (s === 'error') return 'Not saved';
-    return mode === 'shared' ? 'Shared' : 'This phone';
+    if (s === 'error') return 'Offline';
+    return mode === 'cloud' ? 'Live' : 'This phone';
   }
   function setStatus(s) {
     status = s;
     var el = document.getElementById('status-chip');
     if (el) { el.dataset.state = s; el.textContent = statusLabel(s); }
   }
+
+  function saveLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); setStatus('saved'); }
+    catch (e) { setStatus('error'); }
+  }
+
+  /* ---- writes: one row per thing that changed ---- */
+  function pushChallenge() {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('boards?id=eq.' + encodeURIComponent(boardId),
+      { method: 'PATCH', body: { challenge: state.challenge } }));
+  }
+  function pushMember(m) {
+    if (!m) return;
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('members', { method: 'POST', prefer: 'resolution=merge-duplicates',
+      body: { id: m.id, board_id: boardId, name: m.name, color: m.color, plan: m.plan || '', start_date: m.startDate } }));
+  }
+  function pushCheckin(memberId, dateKey) {
+    if (mode !== 'cloud') return saveLocal();
+    var ids = doneOn(state, memberId, dateKey);
+    if (!ids.length) {
+      return track(sbFetch('checkins?member_id=eq.' + encodeURIComponent(memberId) +
+        '&day=eq.' + encodeURIComponent(dateKey), { method: 'DELETE' }));
+    }
+    return track(sbFetch('checkins', { method: 'POST', prefer: 'resolution=merge-duplicates',
+      body: { member_id: memberId, day: dateKey, task_ids: ids } }));
+  }
+  function pushRest(memberId, dateKey, on) {
+    if (mode !== 'cloud') return saveLocal();
+    if (on) {
+      return track(sbFetch('rest_days', { method: 'POST', prefer: 'resolution=merge-duplicates',
+        body: { member_id: memberId, day: dateKey } }));
+    }
+    return track(sbFetch('rest_days?member_id=eq.' + encodeURIComponent(memberId) +
+      '&day=eq.' + encodeURIComponent(dateKey), { method: 'DELETE' }));
+  }
+  function pushWorkout(memberId, dateKey, w) {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('workouts', { method: 'POST',
+      body: { id: w.id, member_id: memberId, day: dateKey, type: w.type, min: w.min, kcal: w.kcal, hr: w.hr } }));
+  }
+  function dropWorkout(id) {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('workouts?id=eq.' + encodeURIComponent(id), { method: 'DELETE' }));
+  }
+  function dropMember(id) {
+    if (mode !== 'cloud') return saveLocal();
+    return track(sbFetch('members?id=eq.' + encodeURIComponent(id), { method: 'DELETE' }));
+  }
+  function clearMemberRows(id) {
+    if (mode !== 'cloud') return saveLocal();
+    var q = 'member_id=eq.' + encodeURIComponent(id);
+    return track(Promise.all([
+      sbFetch('checkins?' + q, { method: 'DELETE' }),
+      sbFetch('rest_days?' + q, { method: 'DELETE' }),
+      sbFetch('workouts?' + q, { method: 'DELETE' })
+    ]));
+  }
+
+  // Text fields fire per keystroke, so those go through a debounce.
   function scheduleSave(delay) {
-    if (mode === 'readonly') return;
-    setStatus('pending');
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(commit, delay || 1100);
-  }
-  function stashUi() {
-    try { sessionStorage.setItem('hard-enough:ui', JSON.stringify({ tab: tab })); } catch (e) { /* ignore */ }
+    lastTouch = Date.now();
+    setStatus('saving');
+    saveTimer = setTimeout(function () {
+      saveTimer = null;
+      if (mode !== 'cloud') return saveLocal();
+      pushChallenge();
+      pushMember(member(me));
+    }, delay || 700);
   }
 
-  async function commit() {
-    if (mode === 'readonly' || saving) return;
-    if (mode === 'local') {
-      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); setStatus('saved'); }
-      catch (e) { setStatus('error'); }
-      return;
-    }
-    // Never publish mid-typing: the reload would steal focus.
+  /* ---- polling: brisk while in use, lazy when idle, paused when hidden ---- */
+  function schedulePoll() {
+    clearTimeout(pollTimer);
+    var idle = Date.now() - lastTouch > 120000;
+    pollTimer = setTimeout(poll, idle ? 20000 : 4000);
+  }
+  async function poll() {
+    if (mode !== 'cloud') return;
     var ae = document.activeElement;
-    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) {
-      clearTimeout(saveTimer); saveTimer = setTimeout(commit, 1400); return;
-    }
-    saving = true; setStatus('saving'); stashUi();
+    var typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
+    // a pending debounce means the local copy is ahead of the server;
+    // refetching now would silently revert what was just typed
+    if (document.hidden || inflight || typing || saveTimer) return schedulePoll();
     try {
-      await artifactApi.publish(renderDocument(state));
-      retried = false; setStatus('saved');
-    } catch (err) {
-      var code = (err && err.code) || 'upstream_error';
-      if (code === 'conflict') {
-        // Someone published first. Every view is already reloading to the
-        // winner — nothing to retry, nothing to apologise for.
-        setStatus('saving');
-      } else if (code === 'not_writer' || code === 'not_granted' || code === 'consent_required' ||
-                 code === 'not_declared' || code === 'capability_disabled' || code === 'capability_removed') {
-        mode = 'readonly'; setStatus('readonly'); render();
-      } else if (code === 'rate_limited') {
-        clearTimeout(saveTimer); saveTimer = setTimeout(commit, 6000); setStatus('pending');
-      } else if (code === 'upstream_error' && !retried) {
-        retried = true; clearTimeout(saveTimer);
-        saveTimer = setTimeout(commit, 800 + Math.random() * 900); setStatus('pending');
-      } else setStatus('error');
-    } finally { saving = false; }
-  }
-
-  /* ---------------- self-republishing ----------------
-     Canonical source is this document's own <style> and <script> text
-     plus the state JSON — never the live DOM, which carries viewer
-     session state and the shell's injected scripts.  */
-
-  function renderDocument(s) {
-    var css = document.getElementById('app-css').textContent;
-    var js = document.getElementById('app-js').textContent;
-    var json = JSON.stringify(s).replace(/</g, '\\u003c');
-    return [
-      '<!doctype html>', '<html lang="en">', '<head>',
-      '<meta charset="utf-8">',
-      '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
-      '<title>' + escapeHtml(s.challenge.name || 'Hard Enough') + '<\/title>',
-      '<meta name="apple-mobile-web-app-capable" content="yes">',
-      '<meta name="mobile-web-app-capable" content="yes">',
-      '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
-      '<meta name="theme-color" content="#171F2D">',
-      '<link rel="preconnect" href="https://fonts.googleapis.com">',
-      '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
-      '<link rel="stylesheet" href="' + FONTS + '">',
-      '<style id="app-css">', css, '<\/style>', '<\/head>', '<body>',
-      '<div id="root"><\/div>',
-      '<script id="app-state" type="application/json">' + json + '<\/script>',
-      '<script id="app-js">', js, '<\/script>', '<\/body>', '<\/html>'
-    ].join('\n');
+      var fresh = await loadBoard();
+      if (fresh && JSON.stringify(fresh) !== JSON.stringify(state)) {
+        state = fresh;
+        if (me && !member(me)) me = null;
+        var y = window.scrollY;
+        render();
+        window.scrollTo(0, y);
+      }
+      if (status === 'error') setStatus('idle');
+    } catch (e) {
+      setStatus('error');
+    }
+    schedulePoll();
   }
 
   /* ---------------- helpers ---------------- */
@@ -844,8 +975,10 @@ select.input{appearance:none}
     var day = state.workouts[memberId][dateKey] || [];
     day.push({ id: uid('w'), type: w.type || 'Other', min: Number(w.min) || 0, kcal: Number(w.kcal) || 0, hr: Number(w.hr) || 0 });
     state.workouts[memberId][dateKey] = day;
+    var added = day[day.length - 1];
     autoTickWorkouts(memberId, dateKey);
-    scheduleSave();
+    pushWorkout(memberId, dateKey, added);
+    pushCheckin(memberId, dateKey);
   }
 
   function removeWorkout(memberId, dateKey, id) {
@@ -854,7 +987,8 @@ select.input{appearance:none}
     if (day.length) state.workouts[memberId][dateKey] = day;
     else if (state.workouts[memberId]) delete state.workouts[memberId][dateKey];
     autoTickWorkouts(memberId, dateKey);
-    scheduleSave();
+    dropWorkout(id);
+    pushCheckin(memberId, dateKey);
   }
 
   /* ---------------- gate ---------------- */
@@ -1256,6 +1390,21 @@ select.input{appearance:none}
           : 'Could not reach the clipboard here — select this and copy it by hand.') + '</p>';
     }
 
+    /* the link IS the credential -- this is how the squad gets in */
+    out += '<div class="rule"></div>';
+    out += '<div class="pill-label" style="margin-top:16px">Invite the squad</div>';
+    if (mode === 'cloud') {
+      out += '<button class="btn primary block" data-act="copy-link" style="margin-top:11px">Copy the board link</button>';
+      if (linkBox) {
+        out += '<textarea class="copybox" id="link-out" readonly>' + escapeHtml(boardLink()) + '</textarea>';
+      }
+      out += '<p class="footer-note left">Anyone with this link is on the board — they open it, tap ' +
+        '<b>Not on the list?</b> and add their name. No account needed. Keep it to the group: the link is the only thing guarding it.</p>';
+    } else {
+      out += '<p class="footer-note left">Not connected to the shared board, so this device is tracking on its own. ' +
+        'Check your connection and reopen — nothing you have logged is lost.</p>';
+    }
+
     out += '<div class="rule"></div><div class="field"><label for="add-mate">Add someone</label>' +
       '<div class="inline"><input class="input" id="add-mate" placeholder="Their name"' + (mode === 'readonly' ? ' disabled' : '') + '>' +
       '<button class="btn" data-act="add-mate"' + (mode === 'readonly' ? ' disabled' : '') + '>Add</button></div></div>';
@@ -1444,13 +1593,13 @@ select.input{appearance:none}
               startDate: todayKey(), plan: String(plan || '').trim().slice(0, 60) };
     state.members.push(m);
     if (makeMe) { me = m.id; try { localStorage.setItem(LS_ME, me); } catch (e) { /* ignore */ } }
-    scheduleSave();
+    pushMember(m);
     return m;
   }
   function toggleTask(memberId, dateKey, taskId) {
     var on = doneOn(state, memberId, dateKey).indexOf(taskId) !== -1;
     setTick(memberId, dateKey, taskId, !on);
-    scheduleSave();
+    pushCheckin(memberId, dateKey);
   }
   function setRest(memberId, dateKey, on) {
     var list = state.rest[memberId] || [];
@@ -1458,7 +1607,7 @@ select.input{appearance:none}
     if (on && i === -1) list.push(dateKey);
     if (!on && i !== -1) list.splice(i, 1);
     if (list.length) state.rest[memberId] = list; else delete state.rest[memberId];
-    scheduleSave();
+    pushRest(memberId, dateKey, on);
   }
   function keepScroll(fn) { var y = window.scrollY; fn(); render(); window.scrollTo(0, y); }
   function readWoInputs() {
@@ -1472,7 +1621,12 @@ select.input{appearance:none}
     if (!el || el.disabled) return;
     var act = el.dataset.act;
 
-    if (act === 'tab') { tab = el.dataset.tab; openDay = null; selBar = null; copyBox = null; render(); window.scrollTo(0, 0); return; }
+    if (act === 'tab') {
+      tab = el.dataset.tab; openDay = null; selBar = null; copyBox = null; linkBox = null;
+      render(); window.scrollTo(0, 0);
+      if (mode === 'cloud') { lastTouch = Date.now(); poll(); }
+      return;
+    }
 
     if (act === 'gate-plan') {
       var nameEl = document.getElementById('gate-name');
@@ -1493,7 +1647,7 @@ select.input{appearance:none}
     }
     if (act === 'set-plan') {
       var mp = member(me);
-      if (mp) { mp.plan = el.dataset.plan; scheduleSave(); }
+      if (mp) { mp.plan = el.dataset.plan; pushMember(mp); }
       keepScroll(function () {});
       return;
     }
@@ -1550,19 +1704,19 @@ select.input{appearance:none}
 
     if (act === 'req') {
       var t = state.challenge.tasks.filter(function (x) { return x.id === el.dataset.task; })[0];
-      if (t) { t.required = !t.required; scheduleSave(); keepScroll(function () {}); }
+      if (t) { t.required = !t.required; pushChallenge(); keepScroll(function () {}); }
       return;
     }
     if (act === 'add-task') {
       state.challenge.tasks.push({ id: uid('t'), label: '', detail: '', required: true });
-      scheduleSave(); render();
+      pushChallenge(); render();
       var inputs = document.querySelectorAll('[data-task-field="label"]');
       if (inputs.length) inputs[inputs.length - 1].focus();
       return;
     }
     if (act === 'del-task') {
       state.challenge.tasks = state.challenge.tasks.filter(function (x) { return x.id !== el.dataset.task; });
-      scheduleSave(); keepScroll(function () {});
+      pushChallenge(); keepScroll(function () {});
       return;
     }
     if (act === 'del-mate') {
@@ -1570,7 +1724,7 @@ select.input{appearance:none}
       state.members = state.members.filter(function (x) { return x.id !== id; });
       delete state.log[id]; delete state.rest[id]; delete state.workouts[id];
       if (me === id) { me = null; try { localStorage.removeItem(LS_ME); } catch (err) { /* ignore */ } }
-      scheduleSave(); render();
+      dropMember(id); render();
       return;
     }
     if (act === 'restart') {
@@ -1578,9 +1732,20 @@ select.input{appearance:none}
       if (!mm) return;
       mm.startDate = todayKey();
       state.log[me] = {}; delete state.rest[me]; delete state.workouts[me];
-      scheduleSave(); tab = 'today'; render();
+      clearMemberRows(me); pushMember(mm); tab = 'today'; render();
       return;
     }
+    if (act === 'copy-link') {
+      var link = boardLink();
+      var show = function (ok) { linkBox = ok ? 'copied' : 'manual'; keepScroll(function () {}); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(function () { show(true); }, function () { show(false); });
+        } else show(false);
+      } catch (err) { show(false); }
+      return;
+    }
+
     if (act === 'copy-standings') {
       var txt = standingsText();
       var done = function (ok) { copyBox = ok ? 'copied' : 'manual'; keepScroll(function () {}); };
@@ -1593,9 +1758,9 @@ select.input{appearance:none}
     }
 
     if (act === 'save-now') {
-      clearTimeout(saveTimer);
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-      commit();
+      lastTouch = Date.now();
+      poll();
     }
   }
 
@@ -1658,7 +1823,11 @@ select.input{appearance:none}
     document.addEventListener('input', onInput);
     document.addEventListener('keydown', onKey);
     // A blur means the user stopped typing — flush without waiting out the debounce.
-    document.addEventListener('focusout', function () { if (status === 'pending') scheduleSave(350); });
+    document.addEventListener('focusout', function () { if (saveTimer) scheduleSave(250); });
+    // coming back to the app should show the squad's latest, not a stale board
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && mode === 'cloud') { lastTouch = Date.now(); poll(); }
+    });
   })();
 })();
 </script>
