@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Closet — build your wardrobe from photos</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%9E%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div>
+                <h1>🪞 Closet</h1>
+                <p class="subtitle">Photos in, wardrobe out — sorted, searchable and styled</p>
+            </div>
+        </header>
+
+        <nav class="nav">
+            <button class="nav-tab active" data-view="studio">📸 Add</button>
+            <button class="nav-tab" data-view="closet">🧺 Closet <span class="nav-count" id="count-closet"></span></button>
+            <button class="nav-tab" data-view="outfits">✨ Outfits</button>
+            <button class="nav-tab" data-view="insights">📊 Insights</button>
+            <button class="nav-tab" data-view="settings">⚙️ Settings</button>
+        </nav>
+
+        <div class="busy" id="busy"></div>
+
+        <main>
+            <section class="view active" id="view-studio"></section>
+            <section class="view" id="view-closet"></section>
+            <section class="view" id="view-outfits"></section>
+            <section class="view" id="view-insights"></section>
+            <section class="view" id="view-settings"></section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Everything is stored in this browser. Photos only leave your device when you press a ✨ button.</p>
+        </footer>
+    </div>
+
+    <div class="modal" id="modal"></div>
+    <div class="toasts" id="toasts"></div>
+
+    <datalist id="subtype-options"></datalist>
+    <datalist id="material-options"></datalist>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
