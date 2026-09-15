@@ -1,0 +1,3432 @@
+<title>Closet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&display=swap">
+<style>
+/* Closet
+ *
+ * The page is full of the owner's clothing colours, so the chrome stays out of
+ * the way: cool paper greys, one spruce accent for actions, one amber signal for
+ * favourites and anything that spends Claude. Colour here is content.
+ *
+ * Type is a single family in two widths &#x2014; Archivo for the interface, Archivo
+ * Narrow set uppercase for labels and meta, the voice of a garment care label.
+ */
+
+:root {
+    --paper: #eceef0;
+    --surface: #ffffff;
+    --surface-sunk: #f4f6f7;
+    --ink: #14181d;
+    --ink-muted: #5c6672;
+    --rule: #d7dce1;
+    --rule-strong: #b9c1c9;
+    --accent: #0f6d62;
+    --accent-ink: #ffffff;
+    --accent-wash: #e2efec;
+    --signal: #a8640a;
+    --signal-wash: #fbf1e0;
+    --danger: #a3342b;
+    --danger-wash: #f8e9e7;
+
+    --radius: 10px;
+    --radius-sm: 7px;
+    --shadow: 0 1px 2px rgba(20, 24, 29, 0.05), 0 4px 14px rgba(20, 24, 29, 0.05);
+    --font: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-label: "Archivo Narrow", "Archivo", -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --paper: #14171a;
+        --surface: #1c2024;
+        --surface-sunk: #23282d;
+        --ink: #e7ebee;
+        --ink-muted: #99a3ae;
+        --rule: #2d3339;
+        --rule-strong: #3d454d;
+        --accent: #4fbfae;
+        --accent-ink: #0a201d;
+        --accent-wash: #1b2f2d;
+        --signal: #dda44a;
+        --signal-wash: #2e2619;
+        --danger: #e4796d;
+        --danger-wash: #32211f;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+}
+
+:root[data-theme="dark"] {
+    --paper: #14171a;
+    --surface: #1c2024;
+    --surface-sunk: #23282d;
+    --ink: #e7ebee;
+    --ink-muted: #99a3ae;
+    --rule: #2d3339;
+    --rule-strong: #3d454d;
+    --accent: #4fbfae;
+    --accent-ink: #0a201d;
+    --accent-wash: #1b2f2d;
+    --signal: #dda44a;
+    --signal-wash: #2e2619;
+    --danger: #e4796d;
+    --danger-wash: #32211f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.app-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 26px 72px;
+}
+
+/* ---------- masthead ---------- */
+.app-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+}
+.app-header h1 {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+.subtitle {
+    margin: 0;
+    color: var(--ink-muted);
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+}
+
+/* ---------- tab rail ---------- */
+.nav {
+    display: flex;
+    gap: 2px;
+    margin: 0 0 20px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--rule);
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    background: var(--paper);
+    z-index: 10;
+}
+.nav-tab {
+    flex: 0 0 auto;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--ink-muted);
+    padding: 12px 14px;
+    font-family: var(--font-label);
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+.nav-count {
+    font-family: var(--font);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    margin-left: 3px;
+}
+
+.busy {
+    display: none;
+    background: var(--accent-wash);
+    color: var(--accent);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+.busy.visible { display: block; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ---------- sections ---------- */
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+}
+.panel h2 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.panel h3 {
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    margin: 0 0 10px;
+}
+.hint { color: var(--ink-muted); font-size: 0.88rem; margin: 0 0 14px; max-width: 62ch; }
+.notice {
+    background: var(--signal-wash);
+    color: var(--signal);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    margin: 12px 0 0;
+}
+.warning { font-size: 0.82rem; color: var(--ink-muted); margin: 12px 0 0; max-width: 62ch; }
+.status-line { font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.07em; font-size: 0.82rem; color: var(--accent); margin: 0; }
+
+/* ---------- controls ---------- */
+.btn {
+    border: 1px solid var(--rule-strong);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 9px 15px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.12); border-color: var(--accent); }
+.btn.accent { background: var(--signal); border-color: var(--signal); color: #fff; }
+.btn.accent:hover:not(:disabled) { filter: brightness(1.1); border-color: var(--signal); }
+.btn.ghost { background: none; border-color: var(--rule); }
+.btn.danger { color: var(--danger); border-color: var(--rule); }
+.btn.danger:hover:not(:disabled) { background: var(--danger-wash); border-color: var(--danger); }
+.btn.tiny { padding: 6px 11px; font-size: 0.8rem; }
+
+input[type="text"], input[type="search"], input[type="password"], select, textarea, input:not([type]) {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--ink);
+}
+textarea { resize: vertical; }
+label {
+    font-family: var(--font-label);
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    display: block;
+}
+label.block { margin-top: 10px; }
+input[type="color"] {
+    width: 100%;
+    height: 36px;
+    padding: 2px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    cursor: pointer;
+}
+.switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: var(--font);
+    color: var(--ink);
+    font-weight: 500;
+}
+.switch input { width: auto; }
+
+/* ---------- intake ---------- */
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 36px 20px;
+    border: 1px dashed var(--rule-strong);
+    border-radius: var(--radius);
+    background: var(--surface-sunk);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.dropzone:hover, .dropzone.dragging { border-color: var(--accent); background: var(--accent-wash); }
+.dropzone-icon { font-size: 1.6rem; }
+.dropzone-title { font-weight: 600; font-size: 0.95rem; }
+.dropzone-sub { font-size: 0.82rem; color: var(--ink-muted); }
+
+.photo-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.photo-chip {
+    position: relative;
+    flex: 0 0 auto;
+    width: 72px;
+    height: 96px;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--surface-sunk);
+}
+.photo-chip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-chip.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-wash); }
+.photo-chip-count {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-label);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.7rem;
+    padding: 0 5px;
+    border-radius: 3px;
+}
+
+/* ---------- tagging stage ---------- */
+.studio-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 22px; }
+.studio-stage {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface-sunk);
+    user-select: none;
+}
+.studio-stage img { width: 100%; display: block; }
+.stage-hint { margin-top: 8px; font-size: 0.82rem; }
+.studio-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+.cropbox-host { position: relative; touch-action: none; }
+.cropbox-overlay { position: absolute; inset: 0; cursor: crosshair; background: rgba(12, 15, 18, 0.42); }
+.cropbox {
+    position: absolute;
+    border: 1.5px solid #fff;
+    background: rgba(255, 255, 255, 0.1);
+    cursor: move;
+}
+.cropbox::after { content: ''; position: absolute; inset: 0; backdrop-filter: brightness(1.6); pointer-events: none; }
+.cropbox-handle {
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    background: #fff;
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+}
+.cropbox-handle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
+.cropbox-handle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
+.cropbox-handle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+.cropbox-handle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+
+/* ---------- review cards ---------- */
+.pending-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 18px 0 10px; }
+.pending-header h3 { margin: 0; }
+.pending-cards { display: flex; flex-direction: column; gap: 10px; max-height: 620px; overflow-y: auto; padding-right: 4px; }
+.pending-card {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--rule);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    background: var(--surface);
+    transition: border-color 0.15s ease;
+}
+.pending-card.focused { border-left-color: var(--accent); }
+.pending-card.excluded { opacity: 0.48; }
+.pending-top { display: flex; gap: 11px; align-items: flex-start; }
+.pending-thumb {
+    width: 56px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: var(--surface-sunk);
+    flex: 0 0 auto;
+}
+.pending-head { flex: 1; min-width: 0; }
+.field-name { font-weight: 600; font-size: 0.92rem; }
+.pending-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.include-toggle input { width: 17px; height: 17px; cursor: pointer; }
+.pending-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 8px; margin-top: 10px; }
+.pending-foot { display: flex; gap: 8px; margin-top: 10px; }
+
+/* swatch chips read like the label sewn into a garment */
+.chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--surface-sunk);
+    color: var(--ink-muted);
+    white-space: nowrap;
+}
+.chip.subtle { font-variant-numeric: tabular-nums; }
+.chip-warn { background: var(--signal-wash); color: var(--signal); }
+
+.season-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.season-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 3px 9px;
+    font-family: var(--font-label);
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--ink-muted);
+}
+.season-chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
+.season-chip input { width: auto; }
+
+/* ---------- closet ---------- */
+.toolbar .search { margin-bottom: 10px; }
+.toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar-row select { width: auto; min-width: 136px; }
+.result-count {
+    margin: 12px 0 0;
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(162px, 1fr)); gap: 12px; }
+.item-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.item-card:hover { border-color: var(--rule-strong); box-shadow: var(--shadow); }
+.item-thumb {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    background: var(--surface-sunk);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.item-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.item-placeholder { font-size: 1.8rem; opacity: 0.45; }
+.item-placeholder.big { font-size: 3.4rem; }
+.fav {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface);
+    color: var(--rule-strong);
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+    box-shadow: var(--shadow);
+}
+.fav.on { color: var(--signal); }
+.item-body { padding: 9px 10px 11px; }
+.item-body h3 {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+    font-family: var(--font);
+}
+.item-sub {
+    margin: 2px 0 7px;
+    font-family: var(--font-label);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+}
+.item-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ---------- detail ---------- */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 15, 18, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+}
+.modal.open { display: flex; }
+.modal-card {
+    position: relative;
+    background: var(--surface);
+    border-radius: var(--radius);
+    max-width: 740px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 22px;
+}
+.modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    border: none;
+    background: none;
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--ink-muted);
+}
+.modal-grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; }
+.modal-image {
+    background: var(--surface-sunk);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 3 / 4;
+}
+.modal-image img { width: 100%; height: 100%; object-fit: cover; }
+.modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; }
+.modal-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 9px; }
+.modal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.wear-line { font-size: 0.85rem; color: var(--ink-muted); margin: 12px 0 0; font-variant-numeric: tabular-nums; }
+
+/* ---------- outfits ---------- */
+.brief-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.brief-row label { flex: 0 0 auto; }
+.brief-row label.grow { flex: 1 1 250px; }
+.brief-row select { width: auto; min-width: 148px; }
+.brief-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.stylist-note {
+    margin: 14px 0 0;
+    padding: 11px 13px;
+    background: var(--surface-sunk);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.88rem;
+    color: var(--ink-muted);
+}
+
+.outfit-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+}
+.outfit-card.worn { border-color: var(--signal); }
+.outfit-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.outfit-head h3 {
+    margin: 0;
+    font-family: var(--font);
+    font-size: 0.98rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+}
+.outfit-sub {
+    margin: 2px 0 0;
+    font-family: var(--font-label);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+.outfit-actions { display: flex; gap: 6px; }
+.outfit-pieces { display: flex; gap: 9px; margin: 14px 0 10px; overflow-x: auto; padding-bottom: 4px; }
+.outfit-piece { flex: 0 0 auto; width: 82px; }
+.outfit-piece img {
+    width: 82px;
+    height: 104px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    background: var(--surface-sunk);
+    display: block;
+}
+.outfit-piece span {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--ink-muted);
+    margin-top: 5px;
+    line-height: 1.25;
+}
+.outfit-reasons { margin: 0; padding-left: 16px; font-size: 0.88rem; color: var(--ink-muted); }
+.outfit-reasons li { margin-bottom: 3px; }
+.outfit-reasons .tip { color: var(--signal); font-weight: 600; list-style: none; margin-left: -16px; }
+
+/* ---------- insights ---------- */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 14px 16px; }
+.stat-value {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+.stat-label {
+    font-family: var(--font-label);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+}
+.bars { display: flex; flex-direction: column; gap: 7px; }
+.bar-row { display: grid; grid-template-columns: 126px 1fr 30px; align-items: center; gap: 10px; font-size: 0.84rem; }
+.bar-label { color: var(--ink-muted); font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.76rem; }
+.bar { background: var(--surface-sunk); border-radius: 2px; height: 9px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+.bar-value { text-align: right; color: var(--ink-muted); font-variant-numeric: tabular-nums; font-size: 0.8rem; }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(226px, 1fr)); gap: 20px; }
+.mini-item { display: flex; align-items: center; gap: 9px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.mini-item img { width: 32px; height: 42px; object-fit: cover; border-radius: 3px; }
+.mini-name { flex: 1; font-size: 0.85rem; }
+.mini-count { font-size: 0.8rem; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.gap-list { margin: 0; padding-left: 16px; font-size: 0.88rem; color: var(--ink-muted); }
+.gap-list li { margin-bottom: 5px; }
+
+/* palette chart &#x2014; each bar wears its own colour */
+.family-black { background: #1b1f24; } .family-white { background: #cfd5da; }
+.family-grey { background: #8f99a3; } .family-beige { background: #cdb99d; }
+.family-brown { background: #79552f; } .family-navy { background: #26375f; }
+.family-red { background: #a8382f; } .family-pink { background: #cf7b96; }
+.family-orange { background: #c67934; } .family-yellow { background: #c9a83a; }
+.family-olive { background: #6f7745; } .family-green { background: #47804f; }
+.family-teal { background: #3a8480; } .family-blue { background: #3d6ba8; }
+.family-purple { background: #714d8f; }
+
+.key-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.key-row input { flex: 1; }
+
+/* ---------- empty states, toasts ---------- */
+.empty { text-align: center; padding: 56px 20px; color: var(--ink-muted); }
+.empty-icon { font-size: 2.2rem; display: block; margin-bottom: 10px; opacity: 0.6; }
+.empty h2 { margin: 0 0 6px; color: var(--ink); font-size: 1.05rem; }
+.empty p { margin: 0 auto 16px; max-width: 46ch; }
+
+.toasts {
+    position: fixed;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    z-index: 80;
+    width: min(430px, calc(100vw - 32px));
+}
+.toast {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    box-shadow: var(--shadow);
+    animation: toast-in 0.18s ease;
+}
+.toast-error { background: var(--danger); color: #fff; }
+.toast.leaving { opacity: 0; transition: opacity 0.3s ease; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.app-footer {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+}
+.app-footer p { margin: 0; }
+a { color: var(--accent); }
+
+@media (max-width: 760px) {
+    .studio-grid { grid-template-columns: 1fr; }
+    .modal-grid { grid-template-columns: 1fr; }
+    .modal-image { max-width: 200px; margin: 0 auto; }
+    .bar-row { grid-template-columns: 92px 1fr 28px; }
+    .item-grid { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
+    .app-container { padding-inline: 16px; }
+}
+</style>
+
+<div class="app-container">
+        <header class="app-header">
+            <h1>Closet</h1>
+            <p class="subtitle">Photos in, wardrobe out</p>
+        </header>
+
+        <nav class="nav">
+            <button class="nav-tab active" data-view="studio">Add</button>
+            <button class="nav-tab" data-view="closet">Closet <span class="nav-count" id="count-closet"></span></button>
+            <button class="nav-tab" data-view="outfits">Outfits</button>
+            <button class="nav-tab" data-view="insights">Insights</button>
+            <button class="nav-tab" data-view="settings">Settings</button>
+        </nav>
+
+        <div class="busy" id="busy"></div>
+
+        <main>
+            <section class="view active" id="view-studio"></section>
+            <section class="view" id="view-closet"></section>
+            <section class="view" id="view-outfits"></section>
+            <section class="view" id="view-insights"></section>
+            <section class="view" id="view-settings"></section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Your pieces and photos stay on this device. A photo only leaves it when you ask Claude to read one.</p>
+        </footer>
+    </div>
+
+    <div class="modal" id="modal"></div>
+    <div class="toasts" id="toasts"></div>
+
+    <datalist id="subtype-options"></datalist>
+    <datalist id="material-options"></datalist>
+
+<script type="module">
+/* ---------- catalog.js ---------- */
+
+// Clothing taxonomy shared by the detector, the closet views and the stylist.
+
+const CATEGORIES = {
+  top:       { label: 'Tops',      slot: 'top',       icon: '\ud83d\udc55' },
+  bottom:    { label: 'Bottoms',   slot: 'bottom',    icon: '\ud83d\udc56' },
+  dress:     { label: 'One-piece', slot: 'onepiece',  icon: '\ud83d\udc57' },
+  outerwear: { label: 'Outerwear', slot: 'outerwear', icon: '\ud83e\udde5' },
+  shoes:     { label: 'Shoes',     slot: 'shoes',     icon: '\ud83d\udc5f' },
+  bag:       { label: 'Bags',      slot: 'bag',       icon: '\ud83d\udc5c' },
+  accessory: { label: 'Accessories', slot: 'accessory', icon: '\ud83e\udde3' },
+};
+
+const CATEGORY_ORDER = ['top', 'bottom', 'dress', 'outerwear', 'shoes', 'bag', 'accessory'];
+
+// Suggested subtypes per category. Free text is allowed too \u2014 these only drive
+// the datalist in the editor and the default-crop heuristics.
+const SUBTYPES = {
+  top: ['t-shirt', 'tank top', 'blouse', 'button-down', 'sweater', 'hoodie', 'sweatshirt', 'crop top', 'bodysuit', 'turtleneck', 'polo'],
+  bottom: ['jeans', 'trousers', 'shorts', 'skirt', 'leggings', 'joggers', 'cargo pants'],
+  dress: ['dress', 'maxi dress', 'mini dress', 'jumpsuit', 'romper', 'set'],
+  outerwear: ['jacket', 'denim jacket', 'leather jacket', 'blazer', 'coat', 'trench coat', 'cardigan', 'puffer', 'vest'],
+  shoes: ['sneakers', 'boots', 'ankle boots', 'heels', 'flats', 'loafers', 'sandals', 'mules'],
+  bag: ['tote', 'shoulder bag', 'crossbody', 'clutch', 'backpack', 'mini bag'],
+  accessory: ['scarf', 'belt', 'hat', 'beanie', 'sunglasses', 'necklace', 'earrings', 'watch', 'socks', 'tights'],
+};
+
+const PATTERNS = ['solid', 'striped', 'plaid', 'floral', 'polka dot', 'animal print', 'graphic', 'colorblock', 'textured', 'denim wash'];
+
+const MATERIALS = ['cotton', 'denim', 'linen', 'wool', 'knit', 'silk', 'satin', 'leather', 'faux leather', 'suede', 'polyester', 'fleece', 'corduroy', 'velvet', 'mesh'];
+
+const SEASONS = ['spring', 'summer', 'fall', 'winter'];
+
+// 1 = loungewear, 5 = black tie. The stylist keeps an outfit's spread tight.
+const FORMALITY = [
+  { value: 1, label: 'Loungewear' },
+  { value: 2, label: 'Casual' },
+  { value: 3, label: 'Smart casual' },
+  { value: 4, label: 'Dressy' },
+  { value: 5, label: 'Formal' },
+];
+
+const OCCASIONS = [
+  { id: 'everyday',   label: 'Everyday',        formality: 2, tags: ['casual', 'errands'] },
+  { id: 'work',       label: 'Work / office',   formality: 4, tags: ['work', 'professional'] },
+  { id: 'class',      label: 'Class / campus',  formality: 2, tags: ['casual', 'comfort'] },
+  { id: 'dinner',     label: 'Dinner out',      formality: 4, tags: ['evening', 'dressy'] },
+  { id: 'date',       label: 'Date night',      formality: 4, tags: ['evening', 'statement'] },
+  { id: 'party',      label: 'Party / event',   formality: 5, tags: ['evening', 'statement'] },
+  { id: 'travel',     label: 'Travel',          formality: 2, tags: ['comfort', 'layers'] },
+  { id: 'workout',    label: 'Active',          formality: 1, tags: ['athletic'] },
+];
+
+const WEATHER = [
+  { id: 'hot',   label: 'Hot (25\u00b0C+)',    seasons: ['summer'],          maxLayers: 0 },
+  { id: 'warm',  label: 'Warm (18\u201325\u00b0C)', seasons: ['summer', 'spring'], maxLayers: 1 },
+  { id: 'mild',  label: 'Mild (10\u201318\u00b0C)', seasons: ['spring', 'fall'],   maxLayers: 1 },
+  { id: 'cool',  label: 'Cool (3\u201310\u00b0C)',  seasons: ['fall', 'winter'],   maxLayers: 2 },
+  { id: 'cold',  label: 'Cold (under 3\u00b0C)', seasons: ['winter'],         maxLayers: 2 },
+];
+
+/** Where a garment usually sits in a full-body photo \u2014 the fallback crop when
+ *  the detector doesn't return a usable region. Values are fractions of the image. */
+const DEFAULT_REGIONS = {
+  top:       { x: 0.22, y: 0.16, width: 0.56, height: 0.30 },
+  bottom:    { x: 0.24, y: 0.44, width: 0.52, height: 0.34 },
+  dress:     { x: 0.20, y: 0.18, width: 0.60, height: 0.52 },
+  outerwear: { x: 0.16, y: 0.14, width: 0.68, height: 0.38 },
+  shoes:     { x: 0.26, y: 0.80, width: 0.48, height: 0.19 },
+  bag:       { x: 0.10, y: 0.38, width: 0.34, height: 0.26 },
+  accessory: { x: 0.28, y: 0.04, width: 0.44, height: 0.22 },
+};
+
+function categoryLabel(id) {
+  return CATEGORIES[id]?.label ?? 'Other';
+}
+
+function categoryIcon(id) {
+  return CATEGORIES[id]?.icon ?? '\ud83e\uddfa';
+}
+
+function formalityLabel(value) {
+  return FORMALITY.find((f) => f.value === Number(value))?.label ?? 'Casual';
+}
+
+function occasion(id) {
+  return OCCASIONS.find((o) => o.id === id) ?? OCCASIONS[0];
+}
+
+function weather(id) {
+  return WEATHER.find((w) => w.id === id) ?? WEATHER[2];
+}
+
+
+const getOccasion = occasion;
+const getWeather = weather;
+
+/* ---------- color.js ---------- */
+
+// Color math: naming, neutrality and pair harmony. Everything the stylist knows
+// about color lives here so the scoring stays explainable.
+
+function hexToRgb(hex) {
+  const clean = String(hex || '').replace('#', '').trim();
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  if (!/^[0-9a-f]{6}$/i.test(full)) return null;
+  return {
+    r: parseInt(full.slice(0, 2), 16),
+    g: parseInt(full.slice(2, 4), 16),
+    b: parseInt(full.slice(4, 6), 16),
+  };
+}
+
+function rgbToHex(r, g, b) {
+  const to = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
+function rgbToHsl({ r, g, b }) {
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0));
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+    h *= 60;
+  }
+  return { h, s, l };
+}
+
+function hexToHsl(hex) {
+  const rgb = hexToRgb(hex);
+  return rgb ? rgbToHsl(rgb) : { h: 0, s: 0, l: 0.5 };
+}
+
+/** Color families used for filtering and for harmony rules. */
+const FAMILIES = [
+  'black', 'white', 'grey', 'beige', 'brown', 'navy',
+  'red', 'pink', 'orange', 'yellow', 'olive', 'green', 'teal', 'blue', 'purple',
+];
+
+const NEUTRAL_FAMILIES = new Set(['black', 'white', 'grey', 'beige', 'brown', 'navy']);
+
+/**
+ * Turn a hex value into a wearable color name plus the family it belongs to.
+ * Returns { name, family, isNeutral }.
+ */
+function describeColor(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return { name: 'unknown', family: 'grey', isNeutral: true };
+  const { h, s, l } = rgbToHsl(rgb);
+
+  if (l <= 0.11) return named('black', 'black');
+  if (l >= 0.93 && s <= 0.14) return named('white', 'white');
+  if (s <= 0.10) {
+    if (l < 0.30) return named('charcoal', 'grey');
+    if (l < 0.62) return named('grey', 'grey');
+    return named('light grey', 'grey');
+  }
+
+  // Warm low-saturation tones read as the neutral family, not as orange.
+  if (h >= 15 && h < 55 && s <= 0.40 && l >= 0.62) return named(l > 0.80 ? 'cream' : 'beige', 'beige');
+  if (h >= 10 && h < 50 && l < 0.42) return named(l < 0.26 ? 'chocolate' : 'brown', 'brown');
+  if (h >= 15 && h < 45 && s <= 0.55 && l < 0.62) return named('tan', 'brown');
+  if (h >= 200 && h < 250 && l < 0.34) return named('navy', 'navy');
+
+  if (h < 15 || h >= 345) {
+    if (l < 0.30) return named('burgundy', 'red');
+    if (s < 0.45 && l > 0.65) return named('dusty rose', 'pink');
+    return named(l > 0.70 ? 'coral' : 'red', 'red');
+  }
+  if (h < 45) return named(l > 0.65 ? 'peach' : 'orange', 'orange');
+  if (h < 70) {
+    if (l < 0.45) return named('olive', 'olive');
+    return named(s > 0.6 ? 'yellow' : 'mustard', 'yellow');
+  }
+  if (h < 100) return named(l < 0.45 ? 'olive' : 'lime', l < 0.45 ? 'olive' : 'green');
+  if (h < 155) return named(l < 0.32 ? 'forest green' : (s < 0.35 ? 'sage' : 'green'), 'green');
+  if (h < 195) return named(l < 0.35 ? 'deep teal' : 'teal', 'teal');
+  if (h < 250) {
+    if (l > 0.75) return named('sky blue', 'blue');
+    if (s < 0.40) return named('denim blue', 'blue');
+    return named('blue', 'blue');
+  }
+  if (h < 290) return named(l < 0.35 ? 'plum' : 'purple', 'purple');
+  if (h < 330) return named(l < 0.35 ? 'plum' : 'magenta', 'purple');
+  return named(l > 0.70 ? 'blush' : 'pink', 'pink');
+
+  function named(name, family) {
+    return { name, family, isNeutral: NEUTRAL_FAMILIES.has(family) };
+  }
+}
+
+function isNeutralFamily(family) {
+  return NEUTRAL_FAMILIES.has(family);
+}
+
+/** Smallest angle between two hues, 0\u2013180. */
+function hueDistance(a, b) {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+
+/**
+ * Score how well two colors sit together: -1 (clashing) to 1 (made for each other).
+ * Returns { score, reason }.
+ */
+function pairHarmony(hexA, hexB) {
+  const a = describeColor(hexA);
+  const b = describeColor(hexB);
+  const ha = hexToHsl(hexA);
+  const hb = hexToHsl(hexB);
+
+  if (a.isNeutral && b.isNeutral) {
+    if ((a.family === 'black' && b.family === 'white') || (a.family === 'white' && b.family === 'black')) {
+      return { score: 0.9, reason: 'black and white is a clean, high-contrast base' };
+    }
+    return { score: 0.75, reason: `${a.name} and ${b.name} are both neutrals, so they never fight` };
+  }
+  if (a.isNeutral || b.isNeutral) {
+    const color = a.isNeutral ? b : a;
+    const neutral = a.isNeutral ? a : b;
+    return { score: 0.8, reason: `${neutral.name} lets the ${color.name} do the talking` };
+  }
+
+  const dist = hueDistance(ha.h, hb.h);
+  const bothVivid = ha.s > 0.45 && hb.s > 0.45;
+
+  if (dist <= 20) return { score: 0.6, reason: `tonal ${a.name} and ${b.name} \u2014 a monochrome-ish pairing` };
+  if (dist <= 45) return { score: 0.7, reason: `${a.name} and ${b.name} are neighbours on the color wheel` };
+  if (dist >= 150) {
+    return bothVivid
+      ? { score: 0.45, reason: `${a.name} against ${b.name} is a bold complementary hit` }
+      : { score: 0.65, reason: `${a.name} and ${b.name} are complementary but muted enough to wear` };
+  }
+  if (dist >= 100 && dist < 150) {
+    return bothVivid
+      ? { score: 0.1, reason: `${a.name} and ${b.name} are a loud, deliberate combination` }
+      : { score: 0.4, reason: `${a.name} and ${b.name} work because both are softened` };
+  }
+  // 45\u2013100 degrees apart with real saturation is the classic clash zone.
+  return bothVivid
+    ? { score: -0.5, reason: `${a.name} next to ${b.name} tends to clash` }
+    : { score: 0.25, reason: `${a.name} and ${b.name} are close enough in tone to pass` };
+}
+
+/** Readable text color for a swatch background. */
+function contrastInk(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return '#1a1a1a';
+  const lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return lum > 0.6 ? '#1a1a1a' : '#ffffff';
+}
+
+
+/* ---------- capabilities.js ---------- */
+
+// Bridges the two places this app runs.
+//
+//   Published as a Claude Artifact \u2014 Claude and storage come from the page's
+//   runtime capabilities. Nothing to configure: it uses the viewer's own
+//   Claude account and the artifact's database.
+//
+//   Served from a local folder \u2014 there is no runtime, so AI runs through the
+//   Anthropic SDK with a key you supply, and everything is stored in IndexedDB.
+//
+// Every getter resolves null when its capability isn't there, and every caller
+// is expected to degrade rather than fail.
+
+const runtime = typeof window !== 'undefined' ? window.claude : undefined;
+
+function useCapability(name) {
+  if (!runtime?.use) return Promise.resolve(null);
+  return Promise.resolve(runtime.use(name)).catch(() => null);
+}
+
+let samplePromise = null;
+let dbPromise = null;
+let downloadsPromise = null;
+
+/** Claude, via the viewer's account. Null when the page isn't in a viewer. */
+function getSample() {
+  if (!samplePromise) samplePromise = useCapability('sample');
+  return samplePromise;
+}
+
+/** The artifact's shared document store. Null when running locally. */
+function getDb() {
+  if (!dbPromise) dbPromise = useCapability('db');
+  return dbPromise;
+}
+
+function getDownloads() {
+  if (!downloadsPromise) downloadsPromise = useCapability('downloads');
+  return downloadsPromise;
+}
+
+/** Whether this view can send photos to Claude \u2014 images are a per-view grant. */
+async function sampleLimits() {
+  const sample = await getSample();
+  if (!sample?.limits) return null;
+  try {
+    return await sample.limits();
+  } catch {
+    return null;
+  }
+}
+
+const isHosted = () => Boolean(runtime?.use);
+
+/** Turn a rejected sample() into copy worth showing a person. */
+function describeSampleError(err) {
+  const code = err?.code;
+  switch (code) {
+    case 'not_granted':
+    case 'sampling_disabled':
+    case 'not_declared':
+    case 'capability_disabled':
+    case 'capability_removed':
+      return new Error('Claude is not available on this page right now.');
+    case 'images_unavailable':
+      return new Error('This view cannot send photos to Claude. You can still tag pieces by hand.');
+    case 'image_rejected':
+      return new Error('Claude could not read that image. Try a JPEG or PNG under 20MB.');
+    case 'rate_limited':
+      return new Error('That is a lot of requests at once. Give it a minute and try again.');
+    case 'session_expired':
+      return new Error('Your session expired \u2014 sign in again and retry.');
+    case 'refused':
+      return new Error('Claude declined to work on this one. Try a different photo.');
+    case 'invalid_json':
+      return new Error('Claude replied in an unexpected shape. Try again.');
+    case 'empty_completion':
+      return new Error('Claude came back empty. Try again with a clearer photo.');
+    case 'prompt_too_large':
+      return new Error('Your closet is too big to send in one go \u2014 that needs splitting up.');
+    case 'cancelled':
+      return Object.assign(new Error('Cancelled.'), { cancelled: true });
+    default:
+      return new Error(err?.message || 'That request did not go through. Try again.');
+  }
+}
+
+
+/* ---------- imaging.js ---------- */
+
+// Canvas work: loading, downscaling, cropping and pulling a palette out of a region.
+
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Could not read that image file.'));
+    img.src = src;
+  });
+}
+
+async function loadImageFromBlob(blob) {
+  // The URL is deliberately not revoked: photo thumbnails re-use img.src for the
+  // life of the session, and a revoked URL silently renders as a broken image.
+  const img = await loadImage(URL.createObjectURL(blob));
+  if (img.decode) { try { await img.decode(); } catch { /* already decoded */ } }
+  return img;
+}
+
+function canvasOf(width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(width));
+  canvas.height = Math.max(1, Math.round(height));
+  return canvas;
+}
+
+/** Downscale an image so its longest edge is at most maxEdge. Returns a Blob. */
+function resizeToBlob(img, maxEdge = 1400, quality = 0.85, type = 'image/jpeg') {
+  const scale = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight));
+  const canvas = canvasOf(img.naturalWidth * scale, img.naturalHeight * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), type, quality));
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1]);
+    reader.onerror = () => reject(new Error('Could not encode the image.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Clamp a normalized region to the image and give it a little breathing room. */
+function normalizeRegion(region, pad = 0.02) {
+  const r = region || {};
+  let x = Number(r.x), y = Number(r.y), w = Number(r.width), h = Number(r.height);
+  if (![x, y, w, h].every(Number.isFinite) || w <= 0.01 || h <= 0.01 || w > 1.2 || h > 1.2) return null;
+  x = Math.max(0, x - pad);
+  y = Math.max(0, y - pad);
+  w = Math.min(1 - x, w + pad * 2);
+  h = Math.min(1 - y, h + pad * 2);
+  if (w <= 0.01 || h <= 0.01) return null;
+  return { x, y, width: w, height: h };
+}
+
+/** Crop a normalized region out of an image and return a JPEG data URL thumbnail. */
+function cropToDataUrl(img, region, maxEdge = 480, quality = 0.82) {
+  const r = normalizeRegion(region, 0) || { x: 0, y: 0, width: 1, height: 1 };
+  const sx = r.x * img.naturalWidth;
+  const sy = r.y * img.naturalHeight;
+  const sw = r.width * img.naturalWidth;
+  const sh = r.height * img.naturalHeight;
+  const scale = Math.min(1, maxEdge / Math.max(sw, sh));
+  const canvas = canvasOf(sw * scale, sh * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+/**
+ * Dominant colors inside a region, most common first.
+ * Samples the middle 80% of the crop so the background edge doesn't win.
+ */
+function paletteFromRegion(img, region, count = 3) {
+  const r = normalizeRegion(region, 0) || { x: 0, y: 0, width: 1, height: 1 };
+  const inset = 0.10;
+  const sx = (r.x + r.width * inset) * img.naturalWidth;
+  const sy = (r.y + r.height * inset) * img.naturalHeight;
+  const sw = Math.max(1, r.width * (1 - inset * 2) * img.naturalWidth);
+  const sh = Math.max(1, r.height * (1 - inset * 2) * img.naturalHeight);
+
+  const size = 48;
+  const canvas = canvasOf(size, size);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
+
+  let data;
+  try {
+    data = ctx.getImageData(0, 0, size, size).data;
+  } catch {
+    return []; // tainted canvas \u2014 only possible for cross-origin sources
+  }
+
+  // Bucket into a coarse RGB grid, then merge buckets that are visually close.
+  const buckets = new Map();
+  for (let i = 0; i < data.length; i += 4) {
+    const alpha = data[i + 3];
+    if (alpha < 200) continue;
+    const r8 = data[i], g8 = data[i + 1], b8 = data[i + 2];
+    const key = `${r8 >> 4}-${g8 >> 4}-${b8 >> 4}`;
+    const bucket = buckets.get(key) || { r: 0, g: 0, b: 0, n: 0 };
+    bucket.r += r8; bucket.g += g8; bucket.b += b8; bucket.n += 1;
+    buckets.set(key, bucket);
+  }
+
+  const total = [...buckets.values()].reduce((sum, b) => sum + b.n, 0) || 1;
+  const candidates = [...buckets.values()]
+    .map((b) => ({ r: b.r / b.n, g: b.g / b.n, b: b.b / b.n, weight: b.n / total }))
+    .sort((a, b) => b.weight - a.weight);
+
+  const picked = [];
+  for (const c of candidates) {
+    const tooClose = picked.some((p) => Math.hypot(p.r - c.r, p.g - c.g, p.b - c.b) < 46);
+    if (tooClose) {
+      const match = picked.find((p) => Math.hypot(p.r - c.r, p.g - c.g, p.b - c.b) < 46);
+      match.weight += c.weight;
+      continue;
+    }
+    picked.push({ ...c });
+    if (picked.length >= count * 2) break;
+  }
+
+  // Prefer colors with some presence; a 3% sliver is usually a shadow.
+  return picked
+    .filter((c, i) => i === 0 || c.weight >= 0.06)
+    .slice(0, count)
+    .map((c) => ({
+      hex: rgbToHex(c.r, c.g, c.b),
+      weight: Number(c.weight.toFixed(3)),
+      hsl: rgbToHsl({ r: c.r, g: c.g, b: c.b }),
+    }));
+}
+
+
+/* ---------- store.js ---------- */
+
+// Persistence, with two backends chosen at run time.
+//
+// Items and saved looks go to the artifact's own document store when the page is
+// published (so the closet follows you between devices), and to IndexedDB when
+// it isn't. Photos always stay in IndexedDB: they are working material, they are
+// large, and once a piece is catalogued its thumbnail travels with the item.
+
+
+const ITEMS_PATH = 'closet';
+const LOOKS_PATH = 'looks';
+
+let backendPromise = null;
+
+/** Resolves once: the shared store if this view has one, otherwise local only. */
+function backend() {
+  if (!backendPromise) {
+    backendPromise = getDb().then((db) => (db ? { kind: 'db', db } : { kind: 'idb' }));
+  }
+  return backendPromise;
+}
+
+async function storeKind() {
+  return (await backend()).kind;
+}
+
+/** Document-store failures, in words a person can act on. */
+function describeDbError(err) {
+  switch (err?.code) {
+    case 'quota_exceeded':
+      return new Error('Your closet has hit its storage limit. Delete a few pieces to add more.');
+    case 'resource_exhausted':
+      return new Error('Too many changes at once \u2014 give it a second and try again.');
+    case 'revoked':
+      return new Error('This page lost access to your closet storage. Reload to reconnect.');
+    case 'invalid_argument':
+      return new Error('That item could not be saved \u2014 it may be too large.');
+    default:
+      return err instanceof Error ? err : new Error(err?.message || 'Could not save to your closet.');
+  }
+}
+
+/** Write to several documents without flooding the store. */
+async function writeAll(docs, write) {
+  const BATCH = 6;
+  for (let i = 0; i < docs.length; i += BATCH) {
+    await Promise.all(docs.slice(i, i + BATCH).map(write));
+  }
+}
+
+const DB_NAME = 'closet-db';
+const DB_VERSION = 1;
+
+let localDbPromise = null;
+
+function openDb() {
+  if (localDbPromise) return localDbPromise;
+  localDbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('photos')) {
+        db.createObjectStore('photos', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('items')) {
+        const items = db.createObjectStore('items', { keyPath: 'id' });
+        items.createIndex('category', 'category', { unique: false });
+        items.createIndex('createdAt', 'createdAt', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('outfits')) {
+        db.createObjectStore('outfits', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('Could not open the closet database.'));
+  });
+  return localDbPromise;
+}
+
+function tx(storeName, mode, run) {
+  return openDb().then((db) => new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, mode);
+    const store = transaction.objectStore(storeName);
+    let result;
+    try {
+      result = run(store);
+    } catch (err) {
+      reject(err);
+      return;
+    }
+    transaction.oncomplete = () => resolve(result && result.__request ? result.__request.result : undefined);
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error || new Error('Database write was aborted.'));
+  }));
+}
+
+function reqValue(request) {
+  return { __request: request };
+}
+
+function newId(prefix) {
+  const rand = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)).replace(/-/g, '').slice(0, 12);
+  return `${prefix}_${rand}`;
+}
+
+/* ---------- photos ---------- */
+
+async function savePhoto(photo) {
+  await tx('photos', 'readwrite', (store) => store.put(photo));
+  return photo;
+}
+
+function getPhoto(id) {
+  return tx('photos', 'readonly', (store) => reqValue(store.get(id)));
+}
+
+function allPhotos() {
+  return tx('photos', 'readonly', (store) => reqValue(store.getAll()));
+}
+
+function deletePhoto(id) {
+  return tx('photos', 'readwrite', (store) => store.delete(id));
+}
+
+/* ---------- items ---------- */
+
+async function saveItem(item) {
+  const be = await backend();
+  try {
+    if (be.kind === 'db') await be.db.doc(`${ITEMS_PATH}/${item.id}`).set(item);
+    else await tx('items', 'readwrite', (store) => store.put(item));
+  } catch (err) {
+    throw describeDbError(err);
+  }
+  return item;
+}
+
+async function saveItems(items) {
+  const be = await backend();
+  try {
+    if (be.kind === 'db') await writeAll(items, (item) => be.db.doc(`${ITEMS_PATH}/${item.id}`).set(item));
+    else await tx('items', 'readwrite', (store) => { items.forEach((item) => store.put(item)); });
+  } catch (err) {
+    throw describeDbError(err);
+  }
+  return items;
+}
+
+async function allItems() {
+  const be = await backend();
+  if (be.kind !== 'db') return tx('items', 'readonly', (store) => reqValue(store.getAll()));
+  const snapshot = await be.db.collection(ITEMS_PATH).get();
+  return snapshot.docs.map((doc) => doc.data()).filter(Boolean);
+}
+
+async function deleteItem(id) {
+  const be = await backend();
+  if (be.kind === 'db') return be.db.doc(`${ITEMS_PATH}/${id}`).delete();
+  return tx('items', 'readwrite', (store) => store.delete(id));
+}
+
+/* ---------- outfits ---------- */
+
+async function saveOutfit(outfit) {
+  const be = await backend();
+  try {
+    if (be.kind === 'db') await be.db.doc(`${LOOKS_PATH}/${outfit.id}`).set(outfit);
+    else await tx('outfits', 'readwrite', (store) => store.put(outfit));
+  } catch (err) {
+    throw describeDbError(err);
+  }
+  return outfit;
+}
+
+async function allOutfits() {
+  const be = await backend();
+  if (be.kind !== 'db') return tx('outfits', 'readonly', (store) => reqValue(store.getAll()));
+  const snapshot = await be.db.collection(LOOKS_PATH).get();
+  return snapshot.docs.map((doc) => doc.data()).filter(Boolean);
+}
+
+async function deleteOutfit(id) {
+  const be = await backend();
+  if (be.kind === 'db') return be.db.doc(`${LOOKS_PATH}/${id}`).delete();
+  return tx('outfits', 'readwrite', (store) => store.delete(id));
+}
+
+/* ---------- settings ---------- */
+
+async function getSetting(key, fallback = null) {
+  const row = await tx('settings', 'readonly', (store) => reqValue(store.get(key)));
+  return row ? row.value : fallback;
+}
+
+function setSetting(key, value) {
+  return tx('settings', 'readwrite', (store) => store.put({ key, value }));
+}
+
+/* ---------- item shape ---------- */
+
+/** Fill in every field the rest of the app expects, so partial input is safe. */
+function makeItem(partial = {}) {
+  const now = new Date().toISOString();
+  return {
+    id: partial.id || newId('item'),
+    photoId: partial.photoId || null,
+    name: partial.name || 'Untitled piece',
+    category: partial.category || 'top',
+    subtype: partial.subtype || '',
+    colors: Array.isArray(partial.colors) && partial.colors.length
+      ? partial.colors.map((c) => ({ hex: c.hex, name: c.name || '', family: c.family || '' }))
+      : [{ hex: '#8a8a8a', name: 'grey', family: 'grey' }],
+    pattern: partial.pattern || 'solid',
+    material: partial.material || '',
+    formality: Number(partial.formality) || 2,
+    seasons: Array.isArray(partial.seasons) && partial.seasons.length ? partial.seasons : ['spring', 'summer', 'fall'],
+    fit: partial.fit || '',
+    tags: Array.isArray(partial.tags) ? partial.tags : [],
+    notes: partial.notes || '',
+    thumb: partial.thumb || '',
+    region: partial.region || null,
+    source: partial.source || 'manual',
+    confidence: typeof partial.confidence === 'number' ? partial.confidence : null,
+    favorite: Boolean(partial.favorite),
+    wearCount: Number(partial.wearCount) || 0,
+    lastWorn: partial.lastWorn || null,
+    createdAt: partial.createdAt || now,
+    updatedAt: now,
+  };
+}
+
+/** Wipe everything \u2014 used by the "delete everything" button in Settings. */
+async function clearAll() {
+  const be = await backend();
+  if (be.kind === 'db') {
+    const [items, looks] = await Promise.all([allItems(), allOutfits()]);
+    await writeAll(items, (item) => be.db.doc(`${ITEMS_PATH}/${item.id}`).delete());
+    await writeAll(looks, (look) => be.db.doc(`${LOOKS_PATH}/${look.id}`).delete());
+  }
+  const local = await openDb();
+  await Promise.all(['photos', 'items', 'outfits'].map((name) => new Promise((resolve, reject) => {
+    const transaction = local.transaction(name, 'readwrite');
+    transaction.objectStore(name).clear();
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  })));
+}
+
+/** Everything in one JSON blob, for backup or moving devices. */
+async function exportAll() {
+  const [items, outfits] = await Promise.all([allItems(), allOutfits()]);
+  return { version: 1, exportedAt: new Date().toISOString(), items, outfits };
+}
+
+async function importAll(payload) {
+  if (!payload || !Array.isArray(payload.items)) throw new Error('That file is not a closet export.');
+  await saveItems(payload.items.map((item) => makeItem(item)));
+  if (Array.isArray(payload.outfits)) {
+    for (const outfit of payload.outfits) await saveOutfit(outfit);
+  }
+  return payload.items.length;
+}
+
+
+const store = { storeKind, newId, savePhoto, getPhoto, allPhotos, deletePhoto, saveItem, saveItems, allItems, deleteItem, saveOutfit, allOutfits, deleteOutfit, getSetting, setSetting, makeItem, clearAll, exportAll, importAll };
+
+/* ---------- cropbox.js ---------- */
+
+// A draggable, resizable selection box over a photo. Used both for tagging a
+// garment by hand and for fixing a region the detector got slightly wrong.
+// Regions are normalized (0\u20131) so they survive any display size.
+
+const MIN_SIZE = 0.04;
+
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
+function createCropBox(host, { region, onChange } = {}) {
+  host.classList.add('cropbox-host');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'cropbox-overlay';
+
+  const box = document.createElement('div');
+  box.className = 'cropbox';
+  box.innerHTML = ['nw', 'ne', 'sw', 'se'].map((corner) => `<span class="cropbox-handle ${corner}" data-corner="${corner}"></span>`).join('');
+  overlay.appendChild(box);
+  host.appendChild(overlay);
+
+  let current = normalize(region) || { x: 0.25, y: 0.2, width: 0.5, height: 0.45 };
+  let drag = null;
+
+  function normalize(r) {
+    if (!r) return null;
+    const x = Number(r.x), y = Number(r.y), width = Number(r.width), height = Number(r.height);
+    if (![x, y, width, height].every(Number.isFinite)) return null;
+    if (width < MIN_SIZE || height < MIN_SIZE) return null;
+    return { x: clamp01(x), y: clamp01(y), width: Math.min(width, 1 - clamp01(x)), height: Math.min(height, 1 - clamp01(y)) };
+  }
+
+  function paint() {
+    box.style.left = `${current.x * 100}%`;
+    box.style.top = `${current.y * 100}%`;
+    box.style.width = `${current.width * 100}%`;
+    box.style.height = `${current.height * 100}%`;
+  }
+
+  function pointFromEvent(event) {
+    const rect = overlay.getBoundingClientRect();
+    return {
+      x: clamp01((event.clientX - rect.left) / rect.width),
+      y: clamp01((event.clientY - rect.top) / rect.height),
+    };
+  }
+
+  function emit() {
+    paint();
+    onChange?.({ ...current });
+  }
+
+  overlay.addEventListener('pointerdown', (event) => {
+    const point = pointFromEvent(event);
+    const corner = event.target.dataset?.corner;
+    overlay.setPointerCapture(event.pointerId);
+
+    if (corner) {
+      drag = { mode: 'resize', corner, origin: current };
+    } else if (event.target === box) {
+      drag = { mode: 'move', grab: { x: point.x - current.x, y: point.y - current.y } };
+    } else {
+      // Dragging on bare photo starts a brand-new box.
+      drag = { mode: 'draw', anchor: point };
+      current = { x: point.x, y: point.y, width: MIN_SIZE, height: MIN_SIZE };
+      paint();
+    }
+    event.preventDefault();
+  });
+
+  overlay.addEventListener('pointermove', (event) => {
+    if (!drag) return;
+    const point = pointFromEvent(event);
+
+    if (drag.mode === 'move') {
+      current = {
+        ...current,
+        x: clamp01(Math.min(point.x - drag.grab.x, 1 - current.width)),
+        y: clamp01(Math.min(point.y - drag.grab.y, 1 - current.height)),
+      };
+    } else if (drag.mode === 'draw') {
+      const x = Math.min(drag.anchor.x, point.x);
+      const y = Math.min(drag.anchor.y, point.y);
+      current = {
+        x, y,
+        width: Math.max(MIN_SIZE, Math.abs(point.x - drag.anchor.x)),
+        height: Math.max(MIN_SIZE, Math.abs(point.y - drag.anchor.y)),
+      };
+    } else if (drag.mode === 'resize') {
+      const { corner, origin } = drag;
+      const right = origin.x + origin.width;
+      const bottom = origin.y + origin.height;
+      let { x, y } = origin;
+      let width = origin.width;
+      let height = origin.height;
+
+      if (corner.includes('w')) { x = Math.min(point.x, right - MIN_SIZE); width = right - x; }
+      if (corner.includes('e')) { width = Math.max(MIN_SIZE, point.x - origin.x); }
+      if (corner.includes('n')) { y = Math.min(point.y, bottom - MIN_SIZE); height = bottom - y; }
+      if (corner.includes('s')) { height = Math.max(MIN_SIZE, point.y - origin.y); }
+
+      current = {
+        x: clamp01(x),
+        y: clamp01(y),
+        width: Math.min(width, 1 - clamp01(x)),
+        height: Math.min(height, 1 - clamp01(y)),
+      };
+    }
+    paint();
+    event.preventDefault();
+  });
+
+  function endDrag(event) {
+    if (!drag) return;
+    drag = null;
+    if (overlay.hasPointerCapture?.(event.pointerId)) overlay.releasePointerCapture(event.pointerId);
+    emit();
+  }
+  overlay.addEventListener('pointerup', endDrag);
+  overlay.addEventListener('pointercancel', endDrag);
+
+  paint();
+
+  return {
+    getRegion: () => ({ ...current }),
+    setRegion(next) {
+      const normalized = normalize(next);
+      if (normalized) { current = normalized; paint(); }
+    },
+    destroy() {
+      overlay.remove();
+      host.classList.remove('cropbox-host');
+    },
+  };
+}
+
+
+/* ---------- vision.js ---------- */
+
+// Reading garments out of a photo.
+//
+// Two backends, same output. Published as an Artifact, the photo goes to Claude
+// through the page's `sample` capability \u2014 the viewer's own account, no key.
+// Served locally, it goes through the Anthropic SDK with a key from Settings.
+
+
+
+
+const SDK_URL = 'https://esm.sh/@anthropic-ai/sdk@0.125.0';
+const MODEL = 'claude-opus-5';
+
+let sdkPromise = null;
+function loadSdk() {
+  if (!sdkPromise) {
+    sdkPromise = import(/* @vite-ignore */ SDK_URL)
+      .then((mod) => mod.default ?? mod.Anthropic)
+      .catch((err) => {
+        sdkPromise = null; // let the next attempt retry rather than cache the failure
+        throw new Error(`Could not load the Anthropic SDK from ${SDK_URL}. Check your connection \u2014 the AI features need it, the rest of the app does not. (${err.message})`);
+      });
+  }
+  return sdkPromise;
+}
+
+async function makeClient(apiKey) {
+  const Anthropic = await loadSdk();
+  return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+}
+
+/**
+ * What the AI features can do in this view.
+ * @returns {Promise<{ai: boolean, photos: boolean, source: 'claude'|'apiKey'|null}>}
+ */
+async function aiStatus(apiKey) {
+  const sample = await getSample();
+  if (sample) {
+    const limits = await sampleLimits();
+    return { ai: true, photos: Boolean(limits?.images), source: 'claude' };
+  }
+  if (apiKey) return { ai: true, photos: true, source: 'apiKey' };
+  return { ai: false, photos: false, source: null };
+}
+
+const GARMENT_SCHEMA = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      description: 'One entry per distinct garment or accessory visible on the person.',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Short wardrobe label, e.g. "cropped white ribbed tank".' },
+          category: { type: 'string', enum: CATEGORY_ORDER },
+          subtype: { type: 'string', description: 'More specific garment type, e.g. "denim jacket".' },
+          primary_color_hex: { type: 'string', description: 'Hex value of the dominant fabric color, e.g. "#2f3a52".' },
+          primary_color_name: { type: 'string' },
+          secondary_color_hex: { type: ['string', 'null'], description: 'Hex of a clear second color, or null.' },
+          pattern: { type: 'string', enum: PATTERNS },
+          material: { type: 'string', description: 'Best guess at the fabric, or "" if unclear.' },
+          formality: { type: 'integer', minimum: 1, maximum: 5, description: '1 loungewear, 2 casual, 3 smart casual, 4 dressy, 5 formal.' },
+          seasons: { type: 'array', items: { type: 'string', enum: SEASONS } },
+          fit: { type: 'string', description: 'e.g. "oversized", "fitted", "straight leg", or "".' },
+          confidence: { type: 'number', minimum: 0, maximum: 1 },
+          region: {
+            type: 'object',
+            description: 'Approximate bounding box of the garment as fractions of the image, origin top-left.',
+            properties: {
+              x: { type: 'number', minimum: 0, maximum: 1 },
+              y: { type: 'number', minimum: 0, maximum: 1 },
+              width: { type: 'number', minimum: 0, maximum: 1 },
+              height: { type: 'number', minimum: 0, maximum: 1 },
+            },
+            required: ['x', 'y', 'width', 'height'],
+            additionalProperties: false,
+          },
+          notes: { type: 'string', description: 'Anything worth remembering: details, hardware, condition, styling.' },
+        },
+        required: ['name', 'category', 'subtype', 'primary_color_hex', 'primary_color_name',
+          'secondary_color_hex', 'pattern', 'material', 'formality', 'seasons', 'fit',
+          'confidence', 'region', 'notes'],
+        additionalProperties: false,
+      },
+    },
+    photo_notes: { type: 'string', description: 'One line about the photo itself \u2014 lighting, angle, anything obscured.' },
+  },
+  required: ['items', 'photo_notes'],
+  additionalProperties: false,
+};
+
+const RULES = `Identify every garment and accessory the person is WEARING or clearly holding.
+
+- One entry per garment. A two-piece set is two entries. Do not invent items you cannot see.
+- Skip anything that is not clothing: furniture, other people's clothes, pets, the room.
+- Skip garments more than about 80% hidden \u2014 an unidentifiable sliver is not worth cataloguing.
+- primary_color_hex is the colour of the FABRIC as it would look in neutral daylight, corrected for a warm or dim room. Never sample skin, hair or background.
+- region is the tight bounding box of the garment itself, as fractions of the image (x, y from the top-left corner). For a mirror selfie where the phone covers part of a top, still box the whole garment.
+- name should read like something the owner would call it in their own closet, not a product listing.
+- confidence reflects how sure you are the item is what you say it is, including how much of it you can actually see.`;
+
+const SYSTEM_PROMPT = `You catalogue clothing for a personal wardrobe app.
+
+The user uploads mirror selfies, photos taken by other people, and flat-lay shots. ${RULES}`;
+
+/** The `sample` capability has no schema enforcement, so the shape goes in the prompt. */
+const SAMPLE_PROMPT = `You catalogue clothing for a personal wardrobe app. Look at the attached photo of a person and ${RULES.charAt(0).toLowerCase()}${RULES.slice(1)}
+
+Reply with ONLY a JSON object of this shape, no other text:
+
+{
+  "photo_notes": "one line about the photo itself \u2014 lighting, angle, anything obscured",
+  "items": [
+    {
+      "name": "cropped white ribbed tank",
+      "category": one of ${CATEGORY_ORDER.map((c) => `"${c}"`).join(', ')},
+      "subtype": "tank top",
+      "primary_color_hex": "#F5F5F4",
+      "primary_color_name": "off-white",
+      "secondary_color_hex": null,
+      "pattern": one of ${PATTERNS.map((p) => `"${p}"`).join(', ')},
+      "material": "cotton",
+      "formality": 1-5 where 1 is loungewear, 2 casual, 3 smart casual, 4 dressy, 5 formal,
+      "seasons": any of ${SEASONS.map((s) => `"${s}"`).join(', ')},
+      "fit": "fitted",
+      "confidence": 0.0-1.0,
+      "region": {"x": 0.26, "y": 0.15, "width": 0.48, "height": 0.31},
+      "notes": "ribbed knit, scoop neck"
+    }
+  ]
+}`;
+
+/** Anything that comes back from the model is untrusted input for our UI, so clamp it. */
+function sanitizeDetected(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const category = CATEGORY_ORDER.includes(source.category) ? source.category : 'top';
+  const hex = /^#[0-9a-f]{6}$/i.test(source.primary_color_hex || '') ? source.primary_color_hex : null;
+  const secondary = /^#[0-9a-f]{6}$/i.test(source.secondary_color_hex || '') ? source.secondary_color_hex : null;
+  const seasons = Array.isArray(source.seasons) ? source.seasons.filter((s) => SEASONS.includes(s)) : [];
+  return {
+    name: String(source.name || 'Untitled piece').slice(0, 80),
+    category,
+    subtype: String(source.subtype || '').slice(0, 60),
+    primaryHex: hex,
+    primaryColorName: String(source.primary_color_name || '').slice(0, 40),
+    secondaryHex: secondary,
+    pattern: PATTERNS.includes(source.pattern) ? source.pattern : 'solid',
+    material: String(source.material || '').slice(0, 40),
+    formality: Math.min(5, Math.max(1, Math.round(Number(source.formality) || 2))),
+    seasons: seasons.length ? seasons : ['spring', 'summer', 'fall'],
+    fit: String(source.fit || '').slice(0, 40),
+    confidence: Math.min(1, Math.max(0, Number(source.confidence) || 0.5)),
+    region: source.region && typeof source.region === 'object' ? {
+      x: Number(source.region.x), y: Number(source.region.y),
+      width: Number(source.region.width), height: Number(source.region.height),
+    } : null,
+    notes: String(source.notes || '').slice(0, 300),
+  };
+}
+
+const shapeResult = (parsed) => ({
+  items: (Array.isArray(parsed?.items) ? parsed.items : []).map(sanitizeDetected),
+  photoNotes: String(parsed?.photo_notes || ''),
+});
+
+/**
+ * Send one photo to Claude and get back the garments it contains.
+ * @param {object} opts { img (HTMLImageElement), apiKey, signal, onProgress }
+ * @returns {Promise<{items: Array, photoNotes: string}>}
+ */
+async function detectGarments({ img, apiKey, signal }) {
+  // 1400px on the long edge keeps garment detail while staying small on the wire.
+  const blob = await resizeToBlob(img, 1400, 0.85, 'image/jpeg');
+
+  const sample = await getSample();
+  if (sample) {
+    const limits = await sampleLimits();
+    if (!limits?.images) throw new Error('This view cannot send photos to Claude. You can still tag pieces by hand.');
+    try {
+      const parsed = await sample.json(SAMPLE_PROMPT, {
+        images: [blob],
+        modelTier: 'complex',
+        signal,
+        cache: false,
+      });
+      return shapeResult(parsed);
+    } catch (err) {
+      throw describeSampleError(err);
+    }
+  }
+
+  if (!apiKey) throw new Error('Add your Anthropic API key in Settings to use auto-detect.');
+  const client = await makeClient(apiKey);
+  const data = await blobToBase64(blob);
+
+  let response;
+  try {
+    response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 16000,
+      system: SYSTEM_PROMPT,
+      thinking: { type: 'adaptive' },
+      output_config: {
+        effort: 'medium',
+        format: { type: 'json_schema', schema: GARMENT_SCHEMA },
+      },
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } },
+          { type: 'text', text: 'Catalogue every garment and accessory this person is wearing.' },
+        ],
+      }],
+    }, { signal });
+  } catch (err) {
+    throw describeApiError(err);
+  }
+
+  if (response.stop_reason === 'refusal') {
+    throw new Error('Claude declined to analyse this photo. Try a different image.');
+  }
+
+  const text = response.content.find((block) => block.type === 'text')?.text ?? '';
+  try {
+    return shapeResult(JSON.parse(text));
+  } catch {
+    throw new Error('Got an unexpected response from Claude \u2014 try that photo again.');
+  }
+}
+
+/** Turn SDK/network failures into something worth showing a person. */
+function describeApiError(err) {
+  const status = err?.status ?? err?.response?.status;
+  if (status === 401) return new Error('That API key was rejected. Check it in Settings.');
+  if (status === 403) return new Error('This key is not allowed to call the Messages API.');
+  if (status === 429) return new Error('Rate limited by the API. Wait a moment and try again.');
+  if (status === 400 && /credit|billing/i.test(err?.message || '')) {
+    return new Error('The API account needs credit before it can run requests.');
+  }
+  if (status >= 500) return new Error('The API had a server error. Try again shortly.');
+  if (err?.name === 'AbortError') return err;
+  if (/fetch|network|Failed to fetch|Load failed/i.test(err?.message || '')) {
+    return new Error(isHosted()
+      ? 'Could not reach Claude. Try again in a moment.'
+      : 'Could not reach the API. Check your connection \u2014 and note this page must be served over http://, not opened as a file://.');
+  }
+  return err instanceof Error ? err : new Error(String(err));
+}
+
+
+/* ---------- stylist.js ---------- */
+
+// Outfit recommendations. Two engines:
+//   buildOutfits() \u2014 always available, scores real combinations from your closet
+//   askStylist()   \u2014 sends the closet inventory (text only) to Claude for picks
+//                    with reasoning, plus a read on what the closet is missing.
+
+
+
+
+
+const STYLIST_MODEL = 'claude-opus-5';
+
+const WEIGHTS = { color: 38, formality: 24, season: 16, pattern: 10, freshness: 8, favorite: 4 };
+const BOLD_PATTERNS = new Set(['plaid', 'floral', 'animal print', 'graphic', 'polka dot', 'striped']);
+
+const primaryHex = (item) => item?.colors?.[0]?.hex ?? '#8a8a8a';
+const daysSince = (iso) => (iso ? (Date.now() - new Date(iso).getTime()) / 86400000 : 999);
+
+/* ---------------- local engine ---------------- */
+
+function seasonFit(item, seasons) {
+  if (!item.seasons?.length) return 0.5;
+  return item.seasons.some((s) => seasons.includes(s)) ? 1 : 0;
+}
+
+/** How well a single item suits the brief, used to shortlist before combining. */
+function itemFit(item, targetFormality, seasons) {
+  const formalityGap = Math.abs((item.formality || 2) - targetFormality);
+  return (
+    seasonFit(item, seasons) * 0.4 +
+    Math.max(0, 1 - formalityGap / 3) * 0.4 +
+    Math.min(1, daysSince(item.lastWorn) / 21) * 0.15 +
+    (item.favorite ? 0.05 : 0)
+  );
+}
+
+function shortlist(items, category, targetFormality, seasons, max) {
+  return items
+    .filter((item) => item.category === category)
+    .map((item) => ({ item, fit: itemFit(item, targetFormality, seasons) }))
+    .sort((a, b) => b.fit - a.fit)
+    .slice(0, max)
+    .map((entry) => entry.item);
+}
+
+function scoreOutfit(pieces, { targetFormality, seasons }) {
+  const reasons = [];
+
+  // Color: every meaningful pair, with the hero pair (first two garments) called out.
+  const garments = pieces.filter((p) => ['top', 'bottom', 'dress', 'outerwear', 'shoes'].includes(p.category));
+  let colorTotal = 0;
+  let colorPairs = 0;
+  let heroReason = '';
+  for (let i = 0; i < garments.length; i += 1) {
+    for (let j = i + 1; j < garments.length; j += 1) {
+      const harmony = pairHarmony(primaryHex(garments[i]), primaryHex(garments[j]));
+      colorTotal += harmony.score;
+      colorPairs += 1;
+      if (!heroReason && i === 0 && j === 1) heroReason = harmony.reason;
+    }
+  }
+  const colorScore = colorPairs ? (colorTotal / colorPairs + 1) / 2 : 0.6;
+  if (heroReason) reasons.push(heroReason.charAt(0).toUpperCase() + heroReason.slice(1));
+
+  // Formality: tight spread, landing near the occasion's level.
+  const levels = pieces.map((p) => p.formality || 2);
+  const spread = Math.max(...levels) - Math.min(...levels);
+  const avg = levels.reduce((a, b) => a + b, 0) / levels.length;
+  const formalityScore = Math.max(0, 1 - spread / 3.5) * 0.6 + Math.max(0, 1 - Math.abs(avg - targetFormality) / 3) * 0.4;
+  if (spread <= 1) reasons.push('Everything sits at the same dress code, so nothing looks out of place');
+  else if (spread >= 3) reasons.push('Mixes very casual and very dressy pieces \u2014 deliberate, but it is a choice');
+
+  // Season / weather.
+  const seasonScore = pieces.reduce((sum, p) => sum + seasonFit(p, seasons), 0) / pieces.length;
+  if (seasonScore === 1) reasons.push(`Every piece is right for ${seasons.join(' / ')} weather`);
+
+  // Pattern: one statement print is styling, two is noise.
+  const bold = pieces.filter((p) => BOLD_PATTERNS.has(p.pattern));
+  const patternScore = bold.length === 0 ? 0.85 : bold.length === 1 ? 1 : Math.max(0, 1 - (bold.length - 1) * 0.5);
+  if (bold.length === 1) reasons.push(`The ${bold[0].pattern} ${bold[0].subtype || bold[0].category} is the one print, so it stays the focus`);
+  if (bold.length > 1) reasons.push('Two prints competing \u2014 swap one for a solid if it feels busy');
+
+  // Freshness: nudge toward things you have not reached for lately.
+  const freshness = pieces.reduce((sum, p) => sum + Math.min(1, daysSince(p.lastWorn) / 21), 0) / pieces.length;
+  const neglected = pieces.filter((p) => p.wearCount === 0);
+  if (neglected.length) reasons.push(`Gets ${neglected.length === 1 ? 'a piece' : `${neglected.length} pieces`} you have never worn into rotation`);
+
+  const favoriteShare = pieces.filter((p) => p.favorite).length / pieces.length;
+
+  const score =
+    colorScore * WEIGHTS.color +
+    formalityScore * WEIGHTS.formality +
+    seasonScore * WEIGHTS.season +
+    patternScore * WEIGHTS.pattern +
+    freshness * WEIGHTS.freshness +
+    favoriteShare * WEIGHTS.favorite;
+
+  return { score: Math.round(score), reasons: reasons.slice(0, 4) };
+}
+
+/**
+ * Build and rank real outfits from the closet.
+ * @param {Array} items closet items
+ * @param {object} opts { occasionId, weatherId, limit, mustIncludeId }
+ */
+function buildOutfits(items, { occasionId = 'everyday', weatherId = 'mild', limit = 8, mustIncludeId = null } = {}) {
+  const occ = getOccasion(occasionId);
+  const wx = getWeather(weatherId);
+  const targetFormality = occ.formality;
+  const seasons = wx.seasons;
+
+  const tops = shortlist(items, 'top', targetFormality, seasons, 9);
+  const bottoms = shortlist(items, 'bottom', targetFormality, seasons, 9);
+  const dresses = shortlist(items, 'dress', targetFormality, seasons, 6);
+  const shoes = shortlist(items, 'shoes', targetFormality, seasons, 6);
+  const outerwear = wx.maxLayers > 0 ? shortlist(items, 'outerwear', targetFormality, seasons, 5) : [];
+  const bags = shortlist(items, 'bag', targetFormality, seasons, 3);
+
+  const bases = [];
+  for (const top of tops) for (const bottom of bottoms) bases.push([top, bottom]);
+  for (const dress of dresses) bases.push([dress]);
+  if (!bases.length) return [];
+
+  const shoeOptions = shoes.length ? shoes : [null];
+  const layerOptions = wx.maxLayers === 2 && outerwear.length ? outerwear : [null, ...outerwear];
+
+  const candidates = [];
+  for (const base of bases) {
+    for (const shoe of shoeOptions) {
+      for (const layer of layerOptions) {
+        const pieces = [...base, shoe, layer].filter(Boolean);
+        if (mustIncludeId && !pieces.some((p) => p.id === mustIncludeId)) continue;
+        const { score, reasons } = scoreOutfit(pieces, { targetFormality, seasons });
+        candidates.push({ pieces, score, reasons });
+      }
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+
+  // Spread the results: no single piece should carry every suggestion.
+  const usage = new Map();
+  const picked = [];
+  for (const candidate of candidates) {
+    if (picked.length >= limit) break;
+    const overused = candidate.pieces.some((p) => (usage.get(p.id) || 0) >= 2);
+    if (overused) continue;
+    candidate.pieces.forEach((p) => usage.set(p.id, (usage.get(p.id) || 0) + 1));
+
+    // A bag is a finishing touch, not part of the ranking \u2014 attach the best match.
+    const bag = bags.find((b) => b.formality >= (occ.formality - 1)) || bags[0] || null;
+    picked.push({
+      id: `local_${picked.length}_${candidate.pieces.map((p) => p.id).join('_')}`,
+      source: 'engine',
+      items: candidate.pieces,
+      extras: bag ? [bag] : [],
+      score: candidate.score,
+      reasons: candidate.reasons,
+      occasionId,
+      weatherId,
+    });
+  }
+  return picked;
+}
+
+/** What the closet cannot do yet \u2014 pure counting, no model needed. */
+function closetGaps(items) {
+  const gaps = [];
+  const byCategory = (cat) => items.filter((i) => i.category === cat);
+  const neutralsIn = (cat) => byCategory(cat).filter((i) => describeColor(primaryHex(i)).isNeutral);
+
+  if (!byCategory('shoes').length) gaps.push('No shoes catalogued yet \u2014 outfits are built without them.');
+  if (byCategory('top').length && !byCategory('bottom').length && !byCategory('dress').length) {
+    gaps.push('Plenty of tops but nothing to wear them with. Add bottoms to unlock full outfits.');
+  }
+  if (byCategory('bottom').length >= 3 && neutralsIn('bottom').length === 0) {
+    gaps.push('Every bottom is a colour. One neutral pair (black, denim, cream) would multiply your combinations.');
+  }
+  if (byCategory('outerwear').length === 0 && items.length >= 6) {
+    gaps.push('No outerwear, so cold-weather suggestions will be thin.');
+  }
+  const dressy = items.filter((i) => (i.formality || 2) >= 4);
+  if (items.length >= 10 && dressy.length <= 1) {
+    gaps.push('Almost everything is casual \u2014 there is little here for a dressy occasion.');
+  }
+  const unworn = items.filter((i) => i.wearCount === 0);
+  if (unworn.length >= 5) gaps.push(`${unworn.length} pieces have never been logged as worn.`);
+  return gaps;
+}
+
+/* ---------------- Claude stylist ---------------- */
+
+/** Compact, text-only view of the closet. No images, so the call stays cheap. */
+function inventoryFor(items) {
+  return items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    category: item.category,
+    subtype: item.subtype,
+    colors: (item.colors || []).map((c) => c.name || c.hex).filter(Boolean),
+    pattern: item.pattern,
+    material: item.material,
+    formality: item.formality,
+    seasons: item.seasons,
+    fit: item.fit,
+    tags: item.tags,
+    wear_count: item.wearCount,
+    days_since_worn: item.lastWorn ? Math.round(daysSince(item.lastWorn)) : null,
+    favorite: item.favorite,
+  }));
+}
+
+const OUTFIT_SCHEMA = {
+  type: 'object',
+  properties: {
+    outfits: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'A short name for the look.' },
+          item_ids: { type: 'array', items: { type: 'string' }, description: 'ids from the inventory, in wearing order.' },
+          why: { type: 'string', description: 'Two sentences on why these pieces work together.' },
+          styling_tip: { type: 'string', description: 'One concrete adjustment: tuck, cuff, layer, swap.' },
+          confidence: { type: 'number', minimum: 0, maximum: 1 },
+        },
+        required: ['name', 'item_ids', 'why', 'styling_tip', 'confidence'],
+        additionalProperties: false,
+      },
+    },
+    closet_note: { type: 'string', description: 'One honest observation about the closet as a whole.' },
+    missing_piece: { type: 'string', description: 'The single item that would unlock the most new outfits.' },
+  },
+  required: ['outfits', 'closet_note', 'missing_piece'],
+  additionalProperties: false,
+};
+
+const STYLIST_SYSTEM = `You are a personal stylist working from a catalogue of clothes someone actually owns.
+
+Rules:
+- Only use item ids present in the inventory. Never invent a piece.
+- Every outfit must be wearable: a top and a bottom, or a one-piece. Add shoes when the closet has them, and outerwear when the weather calls for it.
+- Suggest genuinely different outfits \u2014 not one look with the shoes swapped.
+- Favour pieces that have not been worn recently when the result is just as good.
+- "why" is specific about colour, proportion, or texture. No filler like "this is a great look".
+- If the closet cannot support the occasion, say so plainly in closet_note and suggest the closest workable thing rather than forcing it.`;
+
+/** Keep the prompt inside the 64KiB ceiling; the fullest closets get trimmed. */
+const MAX_ITEMS_SENT = 150;
+
+function briefFor(items, occasionId, weatherId, note, count) {
+  const occ = getOccasion(occasionId);
+  const wx = getWeather(weatherId);
+  const sent = items.length > MAX_ITEMS_SENT
+    // Favourites and unworn pieces are the most interesting to style around.
+    ? [...items].sort((a, b) => (Number(b.favorite) - Number(a.favorite)) || (a.wearCount - b.wearCount)).slice(0, MAX_ITEMS_SENT)
+    : items;
+  const lines = [
+    `Occasion: ${occ.label} (target dress code ${occ.formality}/5, tags: ${occ.tags.join(', ')})`,
+    `Weather: ${wx.label}`,
+    note ? `Also keep in mind: ${note}` : '',
+    `Suggest ${count} outfits.`,
+    sent.length < items.length ? `(Showing ${sent.length} of ${items.length} pieces.)` : '',
+    '',
+    'Inventory:',
+    JSON.stringify(inventoryFor(sent)),
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+
+const SAMPLE_PROMPT_SHAPE = `Reply with ONLY a JSON object of this shape, no other text:
+
+{
+  "closet_note": "one honest observation about the closet as a whole",
+  "missing_piece": "the single item that would unlock the most new outfits",
+  "outfits": [
+    {
+      "name": "short name for the look",
+      "item_ids": ["ids from the inventory, in wearing order"],
+      "why": "two sentences on why these pieces work together",
+      "styling_tip": "one concrete adjustment: tuck, cuff, layer, swap",
+      "confidence": 0.0-1.0
+    }
+  ]
+}`;
+
+/** Shared post-processing: drop hallucinated ids and anything unwearable. */
+function shapeOutfits(parsed, items, occasionId, weatherId) {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const outfits = (Array.isArray(parsed?.outfits) ? parsed.outfits : [])
+    .map((outfit, index) => {
+      const pieces = (Array.isArray(outfit?.item_ids) ? outfit.item_ids : [])
+        .map((id) => byId.get(String(id)))
+        .filter(Boolean);
+      if (pieces.length < 2) return null; // hallucinated or unwearable
+      return {
+        id: `ai_${Date.now()}_${index}`,
+        source: 'claude',
+        name: String(outfit.name || 'Suggested look').slice(0, 60),
+        items: [...new Set(pieces)],
+        extras: [],
+        reasons: [String(outfit.why || '')].filter(Boolean),
+        tip: String(outfit.styling_tip || ''),
+        score: Math.round(Math.min(1, Math.max(0, Number(outfit.confidence) || 0.7)) * 100),
+        occasionId,
+        weatherId,
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    outfits,
+    closetNote: String(parsed?.closet_note || ''),
+    missingPiece: String(parsed?.missing_piece || ''),
+  };
+}
+
+/**
+ * Ask Claude for outfit ideas from the real closet.
+ * Uses the page's own Claude access when published as an Artifact, and the
+ * Anthropic SDK with a Settings key when served locally.
+ * @returns {Promise<{outfits: Array, closetNote: string, missingPiece: string}>}
+ */
+async function askStylist({ apiKey, items, occasionId, weatherId, note = '', count = 4, signal }) {
+  if (!items.length) throw new Error('Add some clothes to the closet first.');
+  const brief = briefFor(items, occasionId, weatherId, note, count);
+
+  const sample = await getSample();
+  if (sample) {
+    let parsed;
+    try {
+      parsed = await sample.json(`${STYLIST_SYSTEM}\n\n${brief}\n\n${SAMPLE_PROMPT_SHAPE}`, {
+        modelTier: 'complex',
+        signal,
+        cache: false,
+      });
+    } catch (err) {
+      throw describeSampleError(err);
+    }
+    return shapeOutfits(parsed, items, occasionId, weatherId);
+  }
+
+  if (!apiKey) throw new Error('Add your Anthropic API key in Settings to use the AI stylist.');
+  const client = await makeClient(apiKey);
+
+  let response;
+  try {
+    response = await client.messages.create({
+      model: STYLIST_MODEL,
+      max_tokens: 16000,
+      system: STYLIST_SYSTEM,
+      thinking: { type: 'adaptive' },
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema: OUTFIT_SCHEMA } },
+      messages: [{ role: 'user', content: brief }],
+    }, { signal });
+  } catch (err) {
+    throw describeApiError(err);
+  }
+
+  if (response.stop_reason === 'refusal') throw new Error('Claude declined that request.');
+
+  const text = response.content.find((block) => block.type === 'text')?.text ?? '';
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error('Got an unexpected response from Claude \u2014 try again.');
+  }
+  return shapeOutfits(parsed, items, occasionId, weatherId);
+}
+
+/** Category counts, colour spread and wear stats for the Insights view. */
+function closetStats(items) {
+  const byCategory = {};
+  const byFamily = {};
+  for (const item of items) {
+    byCategory[item.category] = (byCategory[item.category] || 0) + 1;
+    const family = item.colors?.[0]?.family || describeColor(primaryHex(item)).family;
+    byFamily[family] = (byFamily[family] || 0) + 1;
+  }
+  const worn = items.filter((i) => i.wearCount > 0);
+  const mostWorn = [...items].sort((a, b) => b.wearCount - a.wearCount).slice(0, 5);
+  const neglected = [...items]
+    .filter((i) => i.wearCount === 0)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .slice(0, 5);
+
+  return {
+    total: items.length,
+    byCategory,
+    byFamily,
+    wornShare: items.length ? worn.length / items.length : 0,
+    totalWears: items.reduce((sum, i) => sum + (i.wearCount || 0), 0),
+    mostWorn,
+    neglected,
+    categoryLabels: Object.fromEntries(Object.keys(byCategory).map((c) => [c, categoryLabel(c)])),
+  };
+}
+
+
+/* ---------- app.js ---------- */
+
+// Closet app shell: photo studio, closet grid, outfit views, insights, settings.
+
+
+
+
+
+
+
+
+
+const KEY_STORAGE = 'closet.apiKey';
+
+const state = {
+  view: 'studio',
+  items: [],
+  photos: [],
+  savedOutfits: [],
+  activePhotoId: null,
+  pending: [],          // detected/manual items awaiting confirmation
+  activePendingId: null, // which pending item the crop box is bound to
+  suggestions: [],
+  stylistNote: '',
+  busy: '',
+  ai: { ai: false, photos: false, source: null },
+  filters: { search: '', category: 'all', family: 'all', season: 'all', favorite: false },
+  sort: 'newest',
+  brief: { occasionId: 'everyday', weatherId: 'mild', note: '' },
+};
+
+const imageCache = new Map(); // photoId -> HTMLImageElement
+let cropBox = null;
+
+/* ---------------- tiny helpers ---------------- */
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+function toast(message, tone = 'info') {
+  const host = $('#toasts');
+  const node = document.createElement('div');
+  node.className = `toast toast-${tone}`;
+  node.textContent = message;
+  host.appendChild(node);
+  setTimeout(() => { node.classList.add('leaving'); setTimeout(() => node.remove(), 300); }, tone === 'error' ? 6000 : 3200);
+}
+
+function getApiKey() {
+  return sessionStorage.getItem(KEY_STORAGE) || localStorage.getItem(KEY_STORAGE) || '';
+}
+
+function setBusy(message) {
+  state.busy = message;
+  const bar = $('#busy');
+  bar.textContent = message;
+  bar.classList.toggle('visible', Boolean(message));
+}
+
+async function imageFor(photoId) {
+  if (imageCache.has(photoId)) return imageCache.get(photoId);
+  const photo = state.photos.find((p) => p.id === photoId) || await store.getPhoto(photoId);
+  if (!photo) return null;
+  const img = await loadImageFromBlob(photo.blob);
+  imageCache.set(photoId, img);
+  return img;
+}
+
+/* ---------------- boot ---------------- */
+
+async function boot() {
+  state.ai = await aiStatus(getApiKey());
+  const [items, photos, outfits] = await Promise.all([store.allItems(), store.allPhotos(), store.allOutfits()]);
+  state.items = items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  state.photos = photos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  state.savedOutfits = outfits;
+  if (state.photos.length) state.activePhotoId = state.photos[0].id;
+  if (state.items.length) state.view = 'closet';
+
+  wireChrome();
+  render();
+}
+
+function wireChrome() {
+  $$('.nav-tab').forEach((tab) => tab.addEventListener('click', () => {
+    state.view = tab.dataset.view;
+    render();
+  }));
+}
+
+function render() {
+  $$('.nav-tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === state.view));
+  $$('.view').forEach((view) => view.classList.toggle('active', view.id === `view-${state.view}`));
+  const counts = { closet: state.items.length };
+  $('#count-closet').textContent = counts.closet ? `${counts.closet}` : '';
+
+  if (state.view === 'studio') renderStudio();
+  if (state.view === 'closet') renderCloset();
+  if (state.view === 'outfits') renderOutfits();
+  if (state.view === 'insights') renderInsights();
+  if (state.view === 'settings') renderSettings();
+}
+
+/* ================= STUDIO: photos in, garments out ================= */
+
+function renderStudio() {
+  const root = $('#view-studio');
+  root.innerHTML = `
+    <div class="panel">
+      <h2>Add photos</h2>
+      <p class="hint">Mirror selfies, full-length shots someone took of you, or a flat lay of one piece. Claude reads the photo and lists what you're wearing; you confirm before anything lands in the closet.</p>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="file-input" accept="image/*" multiple hidden>
+        <span class="dropzone-icon">\ud83d\udcf8</span>
+        <span class="dropzone-title">Drop photos here or click to choose</span>
+        <span class="dropzone-sub">JPEG, PNG or HEIC-converted images. They stay on this device.</span>
+      </label>
+    </div>
+
+    ${state.photos.length ? `
+      <div class="panel">
+        <h2>Your photos</h2>
+        <div class="photo-strip" id="photo-strip"></div>
+      </div>
+      <div class="panel studio-panel" id="studio-panel"></div>
+    ` : ''}
+  `;
+
+  const input = $('#file-input');
+  const zone = $('#dropzone');
+  input.addEventListener('change', () => { handleFiles([...input.files]); input.value = ''; });
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragging'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragging');
+    handleFiles([...e.dataTransfer.files].filter((f) => f.type.startsWith('image/')));
+  });
+
+  if (state.photos.length) {
+    renderPhotoStrip();
+    renderStudioPanel();
+  }
+}
+
+function renderPhotoStrip() {
+  const strip = $('#photo-strip');
+  if (!strip) return;
+  strip.innerHTML = '';
+  for (const photo of state.photos) {
+    const button = document.createElement('button');
+    button.className = `photo-chip${photo.id === state.activePhotoId ? ' active' : ''}`;
+    button.innerHTML = `<img alt="Uploaded photo" loading="lazy"><span class="photo-chip-count">${countItemsForPhoto(photo.id)}</span>`;
+    imageFor(photo.id).then((img) => { if (img) button.querySelector('img').src = img.src; });
+    button.addEventListener('click', () => {
+      state.activePhotoId = photo.id;
+      state.pending = [];
+      state.activePendingId = null;
+      renderStudio();
+    });
+    strip.appendChild(button);
+  }
+}
+
+const countItemsForPhoto = (photoId) => state.items.filter((i) => i.photoId === photoId).length;
+
+function detectUnavailableReason() {
+  if (state.ai.ai && !state.ai.photos) return 'This view cannot send photos to Claude, so auto-detect is off. Tagging by hand works exactly the same way.';
+  return 'Auto-detect needs an Anthropic API key (Settings). Tagging by hand works without one.';
+}
+
+async function handleFiles(files) {
+  if (!files.length) return;
+  setBusy(`Importing ${files.length} photo${files.length > 1 ? 's' : ''}\u2026`);
+  try {
+    for (const file of files) {
+      const original = await loadImageFromBlob(file);
+      // Store a downscaled copy: full-resolution phone photos fill up storage fast.
+      const blob = await resizeToBlob(original, 1600, 0.88, 'image/jpeg');
+      const photo = {
+        id: store.newId('photo'),
+        blob,
+        width: original.naturalWidth,
+        height: original.naturalHeight,
+        createdAt: new Date().toISOString(),
+      };
+      await store.savePhoto(photo);
+      state.photos.unshift(photo);
+      state.activePhotoId = photo.id;
+    }
+    state.pending = [];
+    toast(`Added ${files.length} photo${files.length > 1 ? 's' : ''}.`);
+  } catch (err) {
+    toast(err.message || 'Could not read that file.', 'error');
+  } finally {
+    setBusy('');
+    renderStudio();
+  }
+}
+
+function renderStudioPanel() {
+  const panel = $('#studio-panel');
+  if (!panel || !state.activePhotoId) return;
+  const canDetect = state.ai.ai && state.ai.photos;
+
+  panel.innerHTML = `
+    <div class="studio-grid">
+      <div>
+        <div class="studio-stage" id="studio-stage">
+          <img id="studio-image" alt="Photo being tagged">
+        </div>
+        <p class="hint stage-hint" id="stage-hint">Drag on the photo to draw a box around one piece.</p>
+      </div>
+      <div class="studio-side">
+        <div class="studio-actions">
+          <button class="btn primary" id="btn-detect" ${canDetect ? '' : 'disabled'}>\u2728 Find the clothes in this photo</button>
+          <button class="btn" id="btn-manual">\uff0b Tag a piece by hand</button>
+          <button class="btn ghost" id="btn-delete-photo">Remove photo</button>
+        </div>
+        ${canDetect ? '' : `<p class="notice">${esc(detectUnavailableReason())}</p>`}
+        <div id="pending-list"></div>
+      </div>
+    </div>
+  `;
+
+  imageFor(state.activePhotoId).then((img) => {
+    if (img) $('#studio-image').src = img.src;
+  });
+
+  $('#btn-detect').addEventListener('click', runDetection);
+  $('#btn-manual').addEventListener('click', addManualPending);
+  $('#btn-delete-photo').addEventListener('click', removeActivePhoto);
+  renderPending();
+}
+
+async function removeActivePhoto() {
+  const used = countItemsForPhoto(state.activePhotoId);
+  const message = used
+    ? `Remove this photo? ${used} closet item${used > 1 ? 's' : ''} came from it \u2014 they keep their thumbnails and stay in your closet.`
+    : 'Remove this photo?';
+  if (!confirm(message)) return;
+  await store.deletePhoto(state.activePhotoId);
+  imageCache.delete(state.activePhotoId);
+  state.photos = state.photos.filter((p) => p.id !== state.activePhotoId);
+  state.activePhotoId = state.photos[0]?.id ?? null;
+  state.pending = [];
+  renderStudio();
+}
+
+async function runDetection() {
+  const img = await imageFor(state.activePhotoId);
+  if (!img) return;
+  setBusy('Claude is reading the photo\u2026');
+  $('#btn-detect').disabled = true;
+  try {
+    const { items, photoNotes } = await detectGarments({ img, apiKey: getApiKey() });
+    if (!items.length) {
+      toast('No clothing found in that photo. Try a fuller shot, or tag by hand.', 'error');
+      return;
+    }
+    state.pending = items.map((detected) => pendingFromDetection(detected, img));
+    state.activePendingId = state.pending[0].id;
+    if (photoNotes) toast(photoNotes);
+    renderPending();
+    bindCropBox();
+  } catch (err) {
+    toast(err.message || 'Detection failed.', 'error');
+  } finally {
+    setBusy('');
+    const button = $('#btn-detect');
+    if (button) button.disabled = false;
+  }
+}
+
+function pendingFromDetection(detected, img) {
+  const region = normalizeRegion(detected.region, 0.03) || DEFAULT_REGIONS[detected.category];
+  const palette = paletteFromRegion(img, region, 3);
+  // Trust Claude's read of the fabric colour; fall back to pixels if it gave none.
+  const primary = detected.primaryHex || palette[0]?.hex || '#8a8a8a';
+  const described = describeColor(primary);
+  return {
+    id: `pending_${uid()}`,
+    include: true,
+    source: 'claude',
+    name: detected.name,
+    category: detected.category,
+    subtype: detected.subtype,
+    pattern: detected.pattern,
+    material: detected.material,
+    formality: detected.formality,
+    seasons: detected.seasons,
+    fit: detected.fit,
+    notes: detected.notes,
+    confidence: detected.confidence,
+    region,
+    colors: [{ hex: primary, name: detected.primaryColorName || described.name, family: described.family }]
+      .concat(detected.secondaryHex ? [{ hex: detected.secondaryHex, ...pick(describeColor(detected.secondaryHex)) }] : []),
+    thumb: cropToDataUrl(img, region),
+  };
+}
+
+const pick = ({ name, family }) => ({ name, family });
+
+async function addManualPending() {
+  const img = await imageFor(state.activePhotoId);
+  if (!img) return;
+  const region = DEFAULT_REGIONS.top;
+  const palette = paletteFromRegion(img, region, 3);
+  const primary = palette[0]?.hex || '#8a8a8a';
+  const described = describeColor(primary);
+  const entry = {
+    id: `pending_${uid()}`,
+    include: true,
+    source: 'manual',
+    name: '',
+    category: 'top',
+    subtype: '',
+    pattern: 'solid',
+    material: '',
+    formality: 2,
+    seasons: ['spring', 'summer', 'fall'],
+    fit: '',
+    notes: '',
+    confidence: null,
+    region,
+    colors: [{ hex: primary, name: described.name, family: described.family }],
+    thumb: cropToDataUrl(img, region),
+  };
+  state.pending.unshift(entry);
+  state.activePendingId = entry.id;
+  renderPending();
+  bindCropBox();
+}
+
+function renderPending() {
+  const host = $('#pending-list');
+  if (!host) return;
+  if (!state.pending.length) {
+    host.innerHTML = '';
+    return;
+  }
+  const included = state.pending.filter((p) => p.include).length;
+  host.innerHTML = `
+    <div class="pending-header">
+      <h3>Found ${state.pending.length} piece${state.pending.length > 1 ? 's' : ''}</h3>
+      <button class="btn primary" id="btn-save-pending" ${included ? '' : 'disabled'}>Add ${included} to closet</button>
+    </div>
+    <div class="pending-cards">${state.pending.map(pendingCard).join('')}</div>
+  `;
+
+  $('#btn-save-pending').addEventListener('click', savePending);
+  $$('.pending-card', host).forEach(wirePendingCard);
+}
+
+function pendingCard(entry) {
+  const swatch = entry.colors[0];
+  const confidence = entry.confidence != null
+    ? `<span class="chip ${entry.confidence < 0.55 ? 'chip-warn' : ''}">${Math.round(entry.confidence * 100)}% sure</span>`
+    : '<span class="chip">hand-tagged</span>';
+  return `
+    <div class="pending-card${entry.include ? '' : ' excluded'}${entry.id === state.activePendingId ? ' focused' : ''}" data-id="${entry.id}">
+      <div class="pending-top">
+        <img class="pending-thumb" src="${entry.thumb}" alt="${esc(entry.name || 'Detected piece')}">
+        <div class="pending-head">
+          <input class="field-name" data-field="name" value="${esc(entry.name)}" placeholder="Name this piece">
+          <div class="pending-meta">
+            ${confidence}
+            <span class="chip" style="background:${swatch.hex};color:${contrastInk(swatch.hex)}">${esc(swatch.name)}</span>
+          </div>
+        </div>
+        <label class="include-toggle" title="Include in closet">
+          <input type="checkbox" data-field="include" ${entry.include ? 'checked' : ''}>
+        </label>
+      </div>
+      <div class="pending-fields">
+        <label>Category
+          <select data-field="category">
+            ${CATEGORY_ORDER.map((c) => `<option value="${c}" ${c === entry.category ? 'selected' : ''}>${categoryLabel(c)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Type
+          <input list="subtype-options" data-field="subtype" value="${esc(entry.subtype)}" placeholder="e.g. denim jacket">
+        </label>
+        <label>Colour
+          <input type="color" data-field="color" value="${swatch.hex}">
+        </label>
+        <label>Dress code
+          <select data-field="formality">
+            ${FORMALITY.map((f) => `<option value="${f.value}" ${f.value === entry.formality ? 'selected' : ''}>${f.label}</option>`).join('')}
+          </select>
+        </label>
+        <label>Pattern
+          <select data-field="pattern">
+            ${PATTERNS.map((p) => `<option value="${p}" ${p === entry.pattern ? 'selected' : ''}>${p}</option>`).join('')}
+          </select>
+        </label>
+        <label>Material
+          <input list="material-options" data-field="material" value="${esc(entry.material)}" placeholder="optional">
+        </label>
+      </div>
+      <div class="season-row">
+        ${SEASONS.map((s) => `<label class="season-chip${entry.seasons.includes(s) ? ' on' : ''}"><input type="checkbox" data-field="season" value="${s}" ${entry.seasons.includes(s) ? 'checked' : ''}>${s}</label>`).join('')}
+      </div>
+      <div class="pending-foot">
+        <button class="btn tiny" data-action="crop">Adjust crop</button>
+        <button class="btn tiny ghost" data-action="drop">Discard</button>
+      </div>
+    </div>
+  `;
+}
+
+function wirePendingCard(card) {
+  const entry = state.pending.find((p) => p.id === card.dataset.id);
+  if (!entry) return;
+
+  card.addEventListener('click', (event) => {
+    if (event.target.closest('button')) return;
+    if (state.activePendingId !== entry.id) {
+      state.activePendingId = entry.id;
+      $$('.pending-card').forEach((el) => el.classList.toggle('focused', el.dataset.id === entry.id));
+      bindCropBox();
+    }
+  });
+
+  $$('[data-field]', card).forEach((input) => {
+    input.addEventListener('change', async () => {
+      const field = input.dataset.field;
+      if (field === 'include') {
+        entry.include = input.checked;
+        card.classList.toggle('excluded', !entry.include);
+        const button = $('#btn-save-pending');
+        const included = state.pending.filter((p) => p.include).length;
+        button.disabled = !included;
+        button.textContent = `Add ${included} to closet`;
+        return;
+      }
+      if (field === 'season') {
+        entry.seasons = $$('[data-field="season"]', card).filter((el) => el.checked).map((el) => el.value);
+        input.closest('.season-chip').classList.toggle('on', input.checked);
+        return;
+      }
+      if (field === 'color') {
+        const described = describeColor(input.value);
+        entry.colors[0] = { hex: input.value, name: described.name, family: described.family };
+        const chip = $$('.pending-meta .chip', card)[1];
+        chip.style.background = input.value;
+        chip.style.color = contrastInk(input.value);
+        chip.textContent = described.name;
+        return;
+      }
+      if (field === 'category') {
+        entry.category = input.value;
+        if (entry.source === 'manual' && !entry.userMovedCrop) {
+          entry.region = DEFAULT_REGIONS[input.value] || DEFAULT_REGIONS.top;
+          await refreshPendingCrop(entry, card);
+          if (state.activePendingId === entry.id) bindCropBox();
+        }
+        return;
+      }
+      if (field === 'formality') { entry.formality = Number(input.value); return; }
+      entry[field] = input.value;
+    });
+  });
+
+  $('[data-action="crop"]', card).addEventListener('click', () => {
+    state.activePendingId = entry.id;
+    $$('.pending-card').forEach((el) => el.classList.toggle('focused', el.dataset.id === entry.id));
+    bindCropBox();
+    $('#studio-stage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  $('[data-action="drop"]', card).addEventListener('click', () => {
+    state.pending = state.pending.filter((p) => p.id !== entry.id);
+    if (state.activePendingId === entry.id) state.activePendingId = state.pending[0]?.id ?? null;
+    renderPending();
+    bindCropBox();
+  });
+}
+
+async function refreshPendingCrop(entry, card) {
+  const img = await imageFor(state.activePhotoId);
+  if (!img) return;
+  entry.thumb = cropToDataUrl(img, entry.region);
+  const palette = paletteFromRegion(img, entry.region, 3);
+  if (palette[0] && entry.source === 'manual') {
+    const described = describeColor(palette[0].hex);
+    entry.colors[0] = { hex: palette[0].hex, name: described.name, family: described.family };
+  }
+  const node = card || $(`.pending-card[data-id="${entry.id}"]`);
+  if (!node) return;
+  $('.pending-thumb', node).src = entry.thumb;
+  const colorInput = $('[data-field="color"]', node);
+  if (colorInput) colorInput.value = entry.colors[0].hex;
+  const chip = $$('.pending-meta .chip', node)[1];
+  if (chip) {
+    chip.style.background = entry.colors[0].hex;
+    chip.style.color = contrastInk(entry.colors[0].hex);
+    chip.textContent = entry.colors[0].name;
+  }
+}
+
+function bindCropBox() {
+  cropBox?.destroy();
+  cropBox = null;
+  const stage = $('#studio-stage');
+  const hint = $('#stage-hint');
+  const entry = state.pending.find((p) => p.id === state.activePendingId);
+  if (!stage || !entry) {
+    if (hint) hint.textContent = 'Drag on the photo to draw a box around one piece.';
+    return;
+  }
+  if (hint) hint.textContent = `Adjusting: ${entry.name || 'new piece'} \u2014 drag the box or its corners.`;
+
+  let timer = null;
+  cropBox = createCropBox(stage, {
+    region: entry.region,
+    onChange: (region) => {
+      entry.region = region;
+      entry.userMovedCrop = true;
+      clearTimeout(timer);
+      timer = setTimeout(() => refreshPendingCrop(entry), 120);
+    },
+  });
+}
+
+async function savePending() {
+  const chosen = state.pending.filter((p) => p.include);
+  if (!chosen.length) return;
+  setBusy('Saving to closet\u2026');
+  try {
+    const items = chosen.map((entry) => store.makeItem({
+      photoId: state.activePhotoId,
+      name: entry.name?.trim() || `${entry.colors[0].name} ${entry.subtype || categoryLabel(entry.category).toLowerCase()}`,
+      category: entry.category,
+      subtype: entry.subtype,
+      colors: entry.colors,
+      pattern: entry.pattern,
+      material: entry.material,
+      formality: entry.formality,
+      seasons: entry.seasons,
+      fit: entry.fit,
+      notes: entry.notes,
+      thumb: entry.thumb,
+      region: entry.region,
+      source: entry.source,
+      confidence: entry.confidence,
+    }));
+    await store.saveItems(items);
+    state.items = [...items, ...state.items];
+    state.pending = [];
+    state.activePendingId = null;
+    cropBox?.destroy();
+    cropBox = null;
+    toast(`Added ${items.length} piece${items.length > 1 ? 's' : ''} to your closet.`);
+    state.view = 'closet';
+    render();
+  } catch (err) {
+    toast(err.message || 'Could not save those items.', 'error');
+  } finally {
+    setBusy('');
+  }
+}
+
+/* ================= CLOSET ================= */
+
+function visibleItems() {
+  const { search, category, family, season, favorite } = state.filters;
+  const needle = search.trim().toLowerCase();
+  let list = state.items.filter((item) => {
+    if (category !== 'all' && item.category !== category) return false;
+    if (family !== 'all' && (item.colors?.[0]?.family || '') !== family) return false;
+    if (season !== 'all' && !item.seasons?.includes(season)) return false;
+    if (favorite && !item.favorite) return false;
+    if (needle) {
+      const haystack = [item.name, item.subtype, item.material, item.notes, item.pattern, ...(item.tags || []),
+        ...(item.colors || []).map((c) => c.name)].join(' ').toLowerCase();
+      if (!haystack.includes(needle)) return false;
+    }
+    return true;
+  });
+
+  const sorters = {
+    newest: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    oldest: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    name: (a, b) => a.name.localeCompare(b.name),
+    mostWorn: (a, b) => b.wearCount - a.wearCount || new Date(b.createdAt) - new Date(a.createdAt),
+    leastWorn: (a, b) => a.wearCount - b.wearCount || new Date(a.createdAt) - new Date(b.createdAt),
+    color: (a, b) => {
+      const ha = hexToHsl(a.colors?.[0]?.hex || '#888');
+      const hb = hexToHsl(b.colors?.[0]?.hex || '#888');
+      const neutral = (h) => (h.s < 0.12 ? 0 : 1);
+      return neutral(ha) - neutral(hb) || ha.h - hb.h || ha.l - hb.l;
+    },
+    formality: (a, b) => b.formality - a.formality,
+    category: (a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category) || a.name.localeCompare(b.name),
+  };
+  return list.sort(sorters[state.sort] || sorters.newest);
+}
+
+function renderCloset() {
+  const root = $('#view-closet');
+  if (!state.items.length) {
+    root.innerHTML = emptyState('Your closet is empty', 'Upload a photo of yourself and let Claude pull the pieces out of it.', 'Add photos', 'studio');
+    wireEmptyState(root);
+    return;
+  }
+
+  const list = visibleItems();
+  const familiesPresent = FAMILIES.filter((f) => state.items.some((i) => i.colors?.[0]?.family === f));
+
+  root.innerHTML = `
+    <div class="panel toolbar">
+      <input id="search" class="search" type="search" placeholder="Search your closet\u2026" value="${esc(state.filters.search)}">
+      <div class="toolbar-row">
+        <select id="filter-category">
+          <option value="all">All categories</option>
+          ${CATEGORY_ORDER.filter((c) => state.items.some((i) => i.category === c))
+            .map((c) => `<option value="${c}" ${state.filters.category === c ? 'selected' : ''}>${categoryIcon(c)} ${categoryLabel(c)}</option>`).join('')}
+        </select>
+        <select id="filter-family">
+          <option value="all">All colours</option>
+          ${familiesPresent.map((f) => `<option value="${f}" ${state.filters.family === f ? 'selected' : ''}>${f}</option>`).join('')}
+        </select>
+        <select id="filter-season">
+          <option value="all">All seasons</option>
+          ${SEASONS.map((s) => `<option value="${s}" ${state.filters.season === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <select id="sort">
+          ${[['newest', 'Newest first'], ['oldest', 'Oldest first'], ['name', 'Name A\u2013Z'], ['category', 'By category'],
+             ['color', 'By colour'], ['formality', 'Dressiest first'], ['mostWorn', 'Most worn'], ['leastWorn', 'Least worn']]
+            .map(([value, label]) => `<option value="${value}" ${state.sort === value ? 'selected' : ''}>${label}</option>`).join('')}
+        </select>
+        <label class="switch"><input type="checkbox" id="filter-favorite" ${state.filters.favorite ? 'checked' : ''}> \u2605 Favourites</label>
+      </div>
+      <p class="result-count">${list.length} of ${state.items.length} pieces</p>
+    </div>
+    <div class="item-grid">${list.map(itemCard).join('') || '<p class="hint">Nothing matches those filters.</p>'}</div>
+  `;
+
+  const search = $('#search');
+  search.addEventListener('input', () => {
+    state.filters.search = search.value;
+    const list2 = visibleItems();
+    $('.item-grid').innerHTML = list2.map(itemCard).join('') || '<p class="hint">Nothing matches those filters.</p>';
+    $('.result-count').textContent = `${list2.length} of ${state.items.length} pieces`;
+    wireItemCards();
+  });
+  $('#filter-category').addEventListener('change', (e) => { state.filters.category = e.target.value; renderCloset(); });
+  $('#filter-family').addEventListener('change', (e) => { state.filters.family = e.target.value; renderCloset(); });
+  $('#filter-season').addEventListener('change', (e) => { state.filters.season = e.target.value; renderCloset(); });
+  $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; renderCloset(); });
+  $('#filter-favorite').addEventListener('change', (e) => { state.filters.favorite = e.target.checked; renderCloset(); });
+  wireItemCards();
+}
+
+function itemCard(item) {
+  const color = item.colors?.[0] ?? { hex: '#888', name: '' };
+  const worn = item.wearCount ? `${item.wearCount}\u00d7` : 'unworn';
+  return `
+    <article class="item-card" data-id="${item.id}">
+      <div class="item-thumb">
+        ${item.thumb ? `<img src="${item.thumb}" alt="${esc(item.name)}" loading="lazy">` : `<span class="item-placeholder">${categoryIcon(item.category)}</span>`}
+        <button class="fav${item.favorite ? ' on' : ''}" data-action="fav" title="Favourite">\u2605</button>
+      </div>
+      <div class="item-body">
+        <h3>${esc(item.name)}</h3>
+        <p class="item-sub">${esc(item.subtype || categoryLabel(item.category))} \u00b7 ${esc(formalityLabel(item.formality))}</p>
+        <div class="item-chips">
+          <span class="chip" style="background:${color.hex};color:${contrastInk(color.hex)}">${esc(color.name)}</span>
+          <span class="chip subtle">${worn}</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function wireItemCards() {
+  $$('.item-card').forEach((card) => {
+    const item = state.items.find((i) => i.id === card.dataset.id);
+    if (!item) return;
+    $('[data-action="fav"]', card).addEventListener('click', async (event) => {
+      event.stopPropagation();
+      item.favorite = !item.favorite;
+      await store.saveItem(item);
+      event.currentTarget.classList.toggle('on', item.favorite);
+    });
+    card.addEventListener('click', () => openItemModal(item));
+  });
+}
+
+/* ---------------- item detail ---------------- */
+
+function openItemModal(item) {
+  const modal = $('#modal');
+  const color = item.colors?.[0] ?? { hex: '#888', name: '' };
+  modal.innerHTML = `
+    <div class="modal-card">
+      <button class="modal-close" data-action="close">\u2715</button>
+      <div class="modal-grid">
+        <div class="modal-image">${item.thumb ? `<img src="${item.thumb}" alt="${esc(item.name)}">` : `<span class="item-placeholder big">${categoryIcon(item.category)}</span>`}</div>
+        <div class="modal-body">
+          <input class="modal-title" data-field="name" value="${esc(item.name)}">
+          <div class="modal-fields">
+            <label>Category
+              <select data-field="category">${CATEGORY_ORDER.map((c) => `<option value="${c}" ${c === item.category ? 'selected' : ''}>${categoryLabel(c)}</option>`).join('')}</select>
+            </label>
+            <label>Type <input list="subtype-options" data-field="subtype" value="${esc(item.subtype)}"></label>
+            <label>Colour <input type="color" data-field="color" value="${color.hex}"></label>
+            <label>Dress code
+              <select data-field="formality">${FORMALITY.map((f) => `<option value="${f.value}" ${f.value === item.formality ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
+            </label>
+            <label>Pattern
+              <select data-field="pattern">${PATTERNS.map((p) => `<option value="${p}" ${p === item.pattern ? 'selected' : ''}>${p}</option>`).join('')}</select>
+            </label>
+            <label>Material <input list="material-options" data-field="material" value="${esc(item.material)}"></label>
+          </div>
+          <div class="season-row">
+            ${SEASONS.map((s) => `<label class="season-chip${item.seasons?.includes(s) ? ' on' : ''}"><input type="checkbox" data-field="season" value="${s}" ${item.seasons?.includes(s) ? 'checked' : ''}>${s}</label>`).join('')}
+          </div>
+          <label class="block">Notes <textarea data-field="notes" rows="2">${esc(item.notes)}</textarea></label>
+          <p class="wear-line">Worn <strong>${item.wearCount}</strong> time${item.wearCount === 1 ? '' : 's'}${item.lastWorn ? ` \u00b7 last on ${new Date(item.lastWorn).toLocaleDateString()}` : ''}</p>
+          <div class="modal-actions">
+            <button class="btn primary" data-action="wear">Wore it today</button>
+            <button class="btn" data-action="style">Build outfits around this</button>
+            <button class="btn ghost danger" data-action="delete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('open');
+
+  const close = async () => {
+    await store.saveItem(item);
+    modal.classList.remove('open');
+    modal.innerHTML = '';
+    renderCloset();
+  };
+
+  modal.addEventListener('click', (event) => { if (event.target === modal) close(); });
+  $('[data-action="close"]', modal).addEventListener('click', close);
+
+  $$('[data-field]', modal).forEach((input) => {
+    input.addEventListener('change', () => {
+      const field = input.dataset.field;
+      if (field === 'season') {
+        item.seasons = $$('[data-field="season"]', modal).filter((el) => el.checked).map((el) => el.value);
+        input.closest('.season-chip').classList.toggle('on', input.checked);
+      } else if (field === 'color') {
+        const described = describeColor(input.value);
+        item.colors[0] = { hex: input.value, name: described.name, family: described.family };
+      } else if (field === 'formality') {
+        item.formality = Number(input.value);
+      } else {
+        item[field] = input.value;
+      }
+      item.updatedAt = new Date().toISOString();
+    });
+  });
+
+  $('[data-action="wear"]', modal).addEventListener('click', async () => {
+    await markWorn([item.id]);
+    toast(`Logged a wear for ${item.name}.`);
+    close();
+  });
+  $('[data-action="style"]', modal).addEventListener('click', async () => {
+    await store.saveItem(item);
+    modal.classList.remove('open');
+    modal.innerHTML = '';
+    state.view = 'outfits';
+    state.suggestions = buildOutfits(state.items, { ...state.brief, mustIncludeId: item.id, limit: 6 });
+    state.stylistNote = state.suggestions.length ? `Outfits built around ${item.name}.` : `Nothing in the closet pairs with ${item.name} yet.`;
+    render();
+  });
+  $('[data-action="delete"]', modal).addEventListener('click', async () => {
+    if (!confirm(`Delete "${item.name}" from your closet?`)) return;
+    await store.deleteItem(item.id);
+    state.items = state.items.filter((i) => i.id !== item.id);
+    modal.classList.remove('open');
+    modal.innerHTML = '';
+    toast('Deleted.');
+    renderCloset();
+  });
+}
+
+async function markWorn(itemIds) {
+  const today = new Date().toISOString();
+  const touched = state.items.filter((item) => itemIds.includes(item.id));
+  touched.forEach((item) => {
+    item.wearCount = (item.wearCount || 0) + 1;
+    item.lastWorn = today;
+    item.updatedAt = today;
+  });
+  await store.saveItems(touched);
+}
+
+/* ================= OUTFITS ================= */
+
+function renderOutfits() {
+  const root = $('#view-outfits');
+  if (state.items.length < 2) {
+    root.innerHTML = emptyState('Not enough to work with yet', 'Add at least a top and a bottom \u2014 then the stylist has something to combine.', 'Add photos', 'studio');
+    wireEmptyState(root);
+    return;
+  }
+  const canAsk = state.ai.ai;
+
+  root.innerHTML = `
+    <div class="panel">
+      <h2>What are you dressing for?</h2>
+      <div class="brief-row">
+        <label>Occasion
+          <select id="brief-occasion">${OCCASIONS.map((o) => `<option value="${o.id}" ${state.brief.occasionId === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}</select>
+        </label>
+        <label>Weather
+          <select id="brief-weather">${WEATHER.map((w) => `<option value="${w.id}" ${state.brief.weatherId === w.id ? 'selected' : ''}>${w.label}</option>`).join('')}</select>
+        </label>
+        <label class="grow">Anything else? <input id="brief-note" value="${esc(state.brief.note)}" placeholder="e.g. lots of walking, meeting my partner's parents"></label>
+      </div>
+      <div class="brief-actions">
+        <button class="btn primary" id="btn-build">Build outfits</button>
+        <button class="btn accent" id="btn-ai" ${canAsk ? '' : 'disabled'}>\u2728 Ask Claude to style me</button>
+      </div>
+      ${canAsk ? '' : '<p class="notice">Claude styling needs an API key (Settings). The closet engine below works without one.</p>'}
+      ${state.stylistNote ? `<p class="stylist-note">${esc(state.stylistNote)}</p>` : ''}
+    </div>
+    <div id="suggestions">${state.suggestions.length ? state.suggestions.map(outfitCard).join('') : '<p class="hint">Pick an occasion and hit <strong>Build outfits</strong>.</p>'}</div>
+  `;
+
+  $('#brief-occasion').addEventListener('change', (e) => { state.brief.occasionId = e.target.value; });
+  $('#brief-weather').addEventListener('change', (e) => { state.brief.weatherId = e.target.value; });
+  $('#brief-note').addEventListener('input', (e) => { state.brief.note = e.target.value; });
+  $('#btn-build').addEventListener('click', () => {
+    state.suggestions = buildOutfits(state.items, { ...state.brief, limit: 8 });
+    state.stylistNote = state.suggestions.length
+      ? 'Ranked by colour harmony, dress code, weather and what you have not worn lately.'
+      : 'No complete outfit yet \u2014 you need a top and a bottom, or a one-piece.';
+    renderOutfits();
+  });
+  $('#btn-ai').addEventListener('click', runStylist);
+  wireOutfitCards();
+}
+
+async function runStylist() {
+  setBusy('Claude is styling you\u2026');
+  $('#btn-ai').disabled = true;
+  try {
+    const result = await askStylist({
+      apiKey: getApiKey(),
+      items: state.items,
+      occasionId: state.brief.occasionId,
+      weatherId: state.brief.weatherId,
+      note: state.brief.note,
+      count: 4,
+    });
+    state.suggestions = result.outfits;
+    state.stylistNote = [result.closetNote, result.missingPiece ? `Biggest gap: ${result.missingPiece}` : '']
+      .filter(Boolean).join(' ');
+    if (!result.outfits.length) toast('The stylist could not build a full outfit from this closet yet.', 'error');
+  } catch (err) {
+    toast(err.message || 'The stylist request failed.', 'error');
+  } finally {
+    setBusy('');
+    renderOutfits();
+  }
+}
+
+function outfitCard(outfit) {
+  const pieces = [...outfit.items, ...(outfit.extras || [])];
+  return `
+    <article class="outfit-card" data-id="${outfit.id}">
+      <header class="outfit-head">
+        <div>
+          <h3>${esc(outfit.name || outfitTitle(pieces))}</h3>
+          <p class="outfit-sub">${outfit.source === 'claude' ? '\u2728 Claude' : 'Closet engine'} \u00b7 score ${outfit.score}</p>
+        </div>
+        <div class="outfit-actions">
+          <button class="btn tiny primary" data-action="wore">Wore this</button>
+          <button class="btn tiny" data-action="save">Save</button>
+        </div>
+      </header>
+      <div class="outfit-pieces">
+        ${pieces.map((p) => `
+          <div class="outfit-piece" title="${esc(p.name)}">
+            ${p.thumb ? `<img src="${p.thumb}" alt="${esc(p.name)}">` : `<span class="item-placeholder">${categoryIcon(p.category)}</span>`}
+            <span>${esc(p.name)}</span>
+          </div>`).join('')}
+      </div>
+      <ul class="outfit-reasons">
+        ${(outfit.reasons || []).map((r) => `<li>${esc(r)}</li>`).join('')}
+        ${outfit.tip ? `<li class="tip">\ud83d\udca1 ${esc(outfit.tip)}</li>` : ''}
+      </ul>
+    </article>
+  `;
+}
+
+/** "white tank + navy jeans" reads better than "top + bottom". */
+function outfitTitle(pieces) {
+  return pieces.slice(0, 2)
+    .map((p) => `${p.colors?.[0]?.name ?? ''} ${p.subtype || p.category}`.trim())
+    .join(' + ');
+}
+
+function wireOutfitCards() {
+  $$('.outfit-card').forEach((card) => {
+    const outfit = state.suggestions.find((o) => o.id === card.dataset.id);
+    if (!outfit) return;
+    $('[data-action="wore"]', card).addEventListener('click', async () => {
+      await markWorn(outfit.items.map((i) => i.id));
+      toast('Logged \u2014 those pieces will drop down the rotation for a while.');
+      card.classList.add('worn');
+    });
+    $('[data-action="save"]', card).addEventListener('click', async () => {
+      const record = {
+        id: store.newId('outfit'),
+        itemIds: outfit.items.map((i) => i.id),
+        name: outfit.name || outfit.items.map((p) => p.name).join(' + '),
+        source: outfit.source,
+        reasons: outfit.reasons,
+        occasionId: outfit.occasionId,
+        weatherId: outfit.weatherId,
+        createdAt: new Date().toISOString(),
+      };
+      await store.saveOutfit(record);
+      state.savedOutfits.push(record);
+      toast('Saved to your looks.');
+    });
+  });
+}
+
+/* ================= INSIGHTS ================= */
+
+function renderInsights() {
+  const root = $('#view-insights');
+  if (!state.items.length) {
+    root.innerHTML = emptyState('Nothing to analyse yet', 'Your closet stats show up here once you add pieces.', 'Add photos', 'studio');
+    wireEmptyState(root);
+    return;
+  }
+  const stats = closetStats(state.items);
+  const gaps = closetGaps(state.items);
+  const maxCategory = Math.max(...Object.values(stats.byCategory));
+  const maxFamily = Math.max(...Object.values(stats.byFamily));
+
+  root.innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><span class="stat-value">${stats.total}</span><span class="stat-label">pieces</span></div>
+      <div class="stat"><span class="stat-value">${stats.totalWears}</span><span class="stat-label">wears logged</span></div>
+      <div class="stat"><span class="stat-value">${Math.round(stats.wornShare * 100)}%</span><span class="stat-label">of closet worn</span></div>
+      <div class="stat"><span class="stat-value">${state.savedOutfits.length}</span><span class="stat-label">saved looks</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>What you own</h2>
+      <div class="bars">
+        ${CATEGORY_ORDER.filter((c) => stats.byCategory[c]).map((c) => `
+          <div class="bar-row">
+            <span class="bar-label">${categoryIcon(c)} ${categoryLabel(c)}</span>
+            <div class="bar"><div class="bar-fill" style="width:${(stats.byCategory[c] / maxCategory) * 100}%"></div></div>
+            <span class="bar-value">${stats.byCategory[c]}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Your palette</h2>
+      <div class="bars">
+        ${Object.entries(stats.byFamily).sort((a, b) => b[1] - a[1]).map(([family, count]) => `
+          <div class="bar-row">
+            <span class="bar-label">${esc(family)}</span>
+            <div class="bar"><div class="bar-fill family-${esc(family)}" style="width:${(count / maxFamily) * 100}%"></div></div>
+            <span class="bar-value">${count}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Rotation</h2>
+      <div class="two-col">
+        <div>
+          <h3>Most worn</h3>
+          ${stats.mostWorn.filter((i) => i.wearCount > 0).map(miniItem).join('') || '<p class="hint">No wears logged yet.</p>'}
+        </div>
+        <div>
+          <h3>Never worn</h3>
+          ${stats.neglected.map(miniItem).join('') || '<p class="hint">Everything has been worn at least once.</p>'}
+        </div>
+      </div>
+    </div>
+
+    ${gaps.length ? `
+    <div class="panel">
+      <h2>Gaps worth filling</h2>
+      <ul class="gap-list">${gaps.map((g) => `<li>${esc(g)}</li>`).join('')}</ul>
+    </div>` : ''}
+  `;
+}
+
+function miniItem(item) {
+  return `
+    <div class="mini-item">
+      ${item.thumb ? `<img src="${item.thumb}" alt="${esc(item.name)}">` : `<span class="item-placeholder">${categoryIcon(item.category)}</span>`}
+      <span class="mini-name">${esc(item.name)}</span>
+      <span class="mini-count">${item.wearCount}\u00d7</span>
+    </div>`;
+}
+
+/* ================= SETTINGS ================= */
+
+function renderSettings() {
+  const root = $('#view-settings');
+  const stored = getApiKey();
+  const remembered = Boolean(localStorage.getItem(KEY_STORAGE));
+  const hosted = isHosted();
+
+  root.innerHTML = `
+    ${hosted ? `
+    <div class="panel">
+      <h2>Claude</h2>
+      <p class="hint">This page uses your own Claude account \u2014 there is nothing to set up and no API key to manage. Finding clothes in a photo and asking for outfits both count against your usual Claude usage; the first one asks your permission.</p>
+      <p class="status-line">${state.ai.ai ? '\u25cf Connected' : '\u25cb Not available in this view'}${state.ai.ai && !state.ai.photos ? ' \u00b7 photos unavailable here, hand-tagging still works' : ''}</p>
+    </div>` : `
+    <div class="panel">
+      <h2>Anthropic API key</h2>
+      <p class="hint">Needed for finding clothes in photos and for Claude styling. Everything else works without it. Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
+      <div class="key-row">
+        <input type="password" id="api-key" placeholder="sk-ant-\u2026" value="${esc(stored)}" autocomplete="off">
+        <button class="btn primary" id="btn-save-key">Save</button>
+      </div>
+      <label class="switch"><input type="checkbox" id="remember-key" ${remembered ? 'checked' : ''}> Remember on this device</label>
+      <p class="warning">\u26a0\ufe0f The key is used directly from your browser, so it is visible to anything running on this page. Fine for a personal app you run yourself \u2014 don't publish this page to the internet with a key in it.</p>
+    </div>`}
+
+    <div class="panel">
+      <h2>Your data</h2>
+      <p class="hint">${hosted
+        ? 'Your pieces are saved to this artifact, so they are here on any device you open it from. Photos stay in this browser. Nothing else is sent anywhere unless you press a \u2728 button.'
+        : "Photos and items live in this browser's storage. Nothing is uploaded except the photo you explicitly send for detection."}</p>
+      <div class="brief-actions">
+        <button class="btn" id="btn-export">Export closet (JSON)</button>
+        <label class="btn" for="import-input">Import closet</label>
+        <input type="file" id="import-input" accept="application/json" hidden>
+        <button class="btn ghost danger" id="btn-reset">Delete everything</button>
+      </div>
+    </div>
+  `;
+
+  $('#btn-save-key')?.addEventListener('click', () => {
+    const key = $('#api-key').value.trim();
+    const remember = $('#remember-key').checked;
+    sessionStorage.removeItem(KEY_STORAGE);
+    localStorage.removeItem(KEY_STORAGE);
+    if (key) (remember ? localStorage : sessionStorage).setItem(KEY_STORAGE, key);
+    toast(key ? 'Key saved.' : 'Key cleared.');
+    aiStatus(getApiKey()).then((status) => { state.ai = status; render(); });
+  });
+
+  $('#btn-export').addEventListener('click', async () => {
+    const payload = JSON.stringify(await store.exportAll(), null, 2);
+    const filename = `closet-${new Date().toISOString().slice(0, 10)}.json`;
+    const downloads = await getDownloads();
+    if (downloads) {
+      // A published page cannot start its own download; the viewer confirms this one.
+      try {
+        await downloads.save({ filename, data: payload });
+      } catch (err) {
+        if (err?.code !== 'declined') toast(err?.message || 'That download did not go through.', 'error');
+      }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  $('#import-input').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      const count = await store.importAll(JSON.parse(await file.text()));
+      state.items = (await store.allItems()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      state.savedOutfits = await store.allOutfits();
+      toast(`Imported ${count} pieces.`);
+      state.view = 'closet';
+      render();
+    } catch (err) {
+      toast(err.message || 'That file could not be imported.', 'error');
+    }
+  });
+
+  $('#btn-reset').addEventListener('click', async () => {
+    if (!confirm('Delete every photo, item and saved look? This cannot be undone.')) return;
+    await store.clearAll();
+    imageCache.clear();
+    Object.assign(state, { items: [], photos: [], savedOutfits: [], suggestions: [], pending: [], activePhotoId: null, view: 'studio' });
+    toast('Closet cleared.');
+    render();
+  });
+}
+
+/* ---------------- shared bits ---------------- */
+
+function emptyState(title, body, cta, view) {
+  return `
+    <div class="empty">
+      <span class="empty-icon">\ud83e\ude9e</span>
+      <h2>${esc(title)}</h2>
+      <p>${esc(body)}</p>
+      <button class="btn primary" data-goto="${view}">${esc(cta)}</button>
+    </div>`;
+}
+
+function wireEmptyState(root) {
+  const button = $('[data-goto]', root);
+  if (button) button.addEventListener('click', () => { state.view = button.dataset.goto; render(); });
+}
+
+function fillDatalists() {
+  $('#subtype-options').innerHTML = [...new Set(Object.values(SUBTYPES).flat())].map((s) => `<option value="${esc(s)}">`).join('');
+  $('#material-options').innerHTML = MATERIALS.map((m) => `<option value="${esc(m)}">`).join('');
+}
+
+fillDatalists();
+boot().catch((err) => {
+  console.error(err);
+  toast(err.message || 'The closet failed to load.', 'error');
+});
+
+</script>

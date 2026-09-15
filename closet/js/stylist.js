@@ -6,8 +6,9 @@
 import { pairHarmony, describeColor } from './color.js';
 import { occasion as getOccasion, weather as getWeather, categoryLabel } from './catalog.js';
 import { makeClient, describeApiError } from './vision.js';
+import { getSample, describeSampleError } from './capabilities.js';
 
-const MODEL = 'claude-opus-5';
+const STYLIST_MODEL = 'claude-opus-5';
 
 const WEIGHTS = { color: 38, formality: 24, season: 16, pattern: 10, freshness: 8, favorite: 4 };
 const BOLD_PATTERNS = new Set(['plaid', 'floral', 'animal print', 'graphic', 'polka dot', 'striped']);
@@ -244,37 +245,113 @@ Rules:
 - "why" is specific about colour, proportion, or texture. No filler like "this is a great look".
 - If the closet cannot support the occasion, say so plainly in closet_note and suggest the closest workable thing rather than forcing it.`;
 
-/**
- * Ask Claude for outfit ideas from the real closet.
- * @returns {Promise<{outfits: Array, closetNote: string, missingPiece: string}>}
- */
-export async function askStylist({ apiKey, items, occasionId, weatherId, note = '', count = 4, signal }) {
-  if (!apiKey) throw new Error('Add your Anthropic API key in Settings to use the AI stylist.');
-  if (!items.length) throw new Error('Add some clothes to the closet first.');
+/** Keep the prompt inside the 64KiB ceiling; the fullest closets get trimmed. */
+const MAX_ITEMS_SENT = 150;
 
+function briefFor(items, occasionId, weatherId, note, count) {
   const occ = getOccasion(occasionId);
   const wx = getWeather(weatherId);
-  const client = await makeClient(apiKey);
-
-  const prompt = [
+  const sent = items.length > MAX_ITEMS_SENT
+    // Favourites and unworn pieces are the most interesting to style around.
+    ? [...items].sort((a, b) => (Number(b.favorite) - Number(a.favorite)) || (a.wearCount - b.wearCount)).slice(0, MAX_ITEMS_SENT)
+    : items;
+  const lines = [
     `Occasion: ${occ.label} (target dress code ${occ.formality}/5, tags: ${occ.tags.join(', ')})`,
     `Weather: ${wx.label}`,
     note ? `Also keep in mind: ${note}` : '',
     `Suggest ${count} outfits.`,
+    sent.length < items.length ? `(Showing ${sent.length} of ${items.length} pieces.)` : '',
     '',
     'Inventory:',
-    JSON.stringify(inventoryFor(items)),
-  ].filter(Boolean).join('\n');
+    JSON.stringify(inventoryFor(sent)),
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+
+const SAMPLE_PROMPT_SHAPE = `Reply with ONLY a JSON object of this shape, no other text:
+
+{
+  "closet_note": "one honest observation about the closet as a whole",
+  "missing_piece": "the single item that would unlock the most new outfits",
+  "outfits": [
+    {
+      "name": "short name for the look",
+      "item_ids": ["ids from the inventory, in wearing order"],
+      "why": "two sentences on why these pieces work together",
+      "styling_tip": "one concrete adjustment: tuck, cuff, layer, swap",
+      "confidence": 0.0-1.0
+    }
+  ]
+}`;
+
+/** Shared post-processing: drop hallucinated ids and anything unwearable. */
+function shapeOutfits(parsed, items, occasionId, weatherId) {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const outfits = (Array.isArray(parsed?.outfits) ? parsed.outfits : [])
+    .map((outfit, index) => {
+      const pieces = (Array.isArray(outfit?.item_ids) ? outfit.item_ids : [])
+        .map((id) => byId.get(String(id)))
+        .filter(Boolean);
+      if (pieces.length < 2) return null; // hallucinated or unwearable
+      return {
+        id: `ai_${Date.now()}_${index}`,
+        source: 'claude',
+        name: String(outfit.name || 'Suggested look').slice(0, 60),
+        items: [...new Set(pieces)],
+        extras: [],
+        reasons: [String(outfit.why || '')].filter(Boolean),
+        tip: String(outfit.styling_tip || ''),
+        score: Math.round(Math.min(1, Math.max(0, Number(outfit.confidence) || 0.7)) * 100),
+        occasionId,
+        weatherId,
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    outfits,
+    closetNote: String(parsed?.closet_note || ''),
+    missingPiece: String(parsed?.missing_piece || ''),
+  };
+}
+
+/**
+ * Ask Claude for outfit ideas from the real closet.
+ * Uses the page's own Claude access when published as an Artifact, and the
+ * Anthropic SDK with a Settings key when served locally.
+ * @returns {Promise<{outfits: Array, closetNote: string, missingPiece: string}>}
+ */
+export async function askStylist({ apiKey, items, occasionId, weatherId, note = '', count = 4, signal }) {
+  if (!items.length) throw new Error('Add some clothes to the closet first.');
+  const brief = briefFor(items, occasionId, weatherId, note, count);
+
+  const sample = await getSample();
+  if (sample) {
+    let parsed;
+    try {
+      parsed = await sample.json(`${STYLIST_SYSTEM}\n\n${brief}\n\n${SAMPLE_PROMPT_SHAPE}`, {
+        modelTier: 'complex',
+        signal,
+        cache: false,
+      });
+    } catch (err) {
+      throw describeSampleError(err);
+    }
+    return shapeOutfits(parsed, items, occasionId, weatherId);
+  }
+
+  if (!apiKey) throw new Error('Add your Anthropic API key in Settings to use the AI stylist.');
+  const client = await makeClient(apiKey);
 
   let response;
   try {
     response = await client.messages.create({
-      model: MODEL,
+      model: STYLIST_MODEL,
       max_tokens: 16000,
       system: STYLIST_SYSTEM,
       thinking: { type: 'adaptive' },
       output_config: { effort: 'medium', format: { type: 'json_schema', schema: OUTFIT_SCHEMA } },
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: brief }],
     }, { signal });
   } catch (err) {
     throw describeApiError(err);
@@ -289,32 +366,7 @@ export async function askStylist({ apiKey, items, occasionId, weatherId, note = 
   } catch {
     throw new Error('Got an unexpected response from Claude — try again.');
   }
-
-  const byId = new Map(items.map((item) => [item.id, item]));
-  const outfits = (parsed.outfits || [])
-    .map((outfit, index) => {
-      const pieces = (outfit.item_ids || []).map((id) => byId.get(id)).filter(Boolean);
-      if (pieces.length < 2) return null; // hallucinated or unwearable
-      return {
-        id: `ai_${Date.now()}_${index}`,
-        source: 'claude',
-        name: String(outfit.name || 'Suggested look').slice(0, 60),
-        items: pieces,
-        extras: [],
-        reasons: [String(outfit.why || '')].filter(Boolean),
-        tip: String(outfit.styling_tip || ''),
-        score: Math.round((Number(outfit.confidence) || 0.7) * 100),
-        occasionId,
-        weatherId,
-      };
-    })
-    .filter(Boolean);
-
-  return {
-    outfits,
-    closetNote: String(parsed.closet_note || ''),
-    missingPiece: String(parsed.missing_piece || ''),
-  };
+  return shapeOutfits(parsed, items, occasionId, weatherId);
 }
 
 /** Category counts, colour spread and wear stats for the Insights view. */

@@ -9,7 +9,8 @@ import { describeColor, contrastInk, hexToHsl, FAMILIES } from './color.js';
 import { loadImageFromBlob, resizeToBlob, cropToDataUrl, paletteFromRegion, normalizeRegion } from './imaging.js';
 import * as store from './store.js';
 import { createCropBox } from './cropbox.js';
-import { detectGarments } from './vision.js';
+import { detectGarments, aiStatus } from './vision.js';
+import { getDownloads, isHosted } from './capabilities.js';
 import { buildOutfits, askStylist, closetGaps, closetStats } from './stylist.js';
 
 const KEY_STORAGE = 'closet.apiKey';
@@ -25,6 +26,7 @@ const state = {
   suggestions: [],
   stylistNote: '',
   busy: '',
+  ai: { ai: false, photos: false, source: null },
   filters: { search: '', category: 'all', family: 'all', season: 'all', favorite: false },
   sort: 'newest',
   brief: { occasionId: 'everyday', weatherId: 'mild', note: '' },
@@ -74,6 +76,7 @@ async function imageFor(photoId) {
 /* ---------------- boot ---------------- */
 
 async function boot() {
+  state.ai = await aiStatus(getApiKey());
   const [items, photos, outfits] = await Promise.all([store.allItems(), store.allPhotos(), store.allOutfits()]);
   state.items = items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   state.photos = photos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -168,6 +171,11 @@ function renderPhotoStrip() {
 
 const countItemsForPhoto = (photoId) => state.items.filter((i) => i.photoId === photoId).length;
 
+function detectUnavailableReason() {
+  if (state.ai.ai && !state.ai.photos) return 'This view cannot send photos to Claude, so auto-detect is off. Tagging by hand works exactly the same way.';
+  return 'Auto-detect needs an Anthropic API key (Settings). Tagging by hand works without one.';
+}
+
 async function handleFiles(files) {
   if (!files.length) return;
   setBusy(`Importing ${files.length} photo${files.length > 1 ? 's' : ''}…`);
@@ -200,7 +208,7 @@ async function handleFiles(files) {
 function renderStudioPanel() {
   const panel = $('#studio-panel');
   if (!panel || !state.activePhotoId) return;
-  const hasKey = Boolean(getApiKey());
+  const canDetect = state.ai.ai && state.ai.photos;
 
   panel.innerHTML = `
     <div class="studio-grid">
@@ -212,11 +220,11 @@ function renderStudioPanel() {
       </div>
       <div class="studio-side">
         <div class="studio-actions">
-          <button class="btn primary" id="btn-detect" ${hasKey ? '' : 'disabled'}>✨ Detect clothes with AI</button>
+          <button class="btn primary" id="btn-detect" ${canDetect ? '' : 'disabled'}>✨ Find the clothes in this photo</button>
           <button class="btn" id="btn-manual">＋ Tag a piece by hand</button>
           <button class="btn ghost" id="btn-delete-photo">Remove photo</button>
         </div>
-        ${hasKey ? '' : '<p class="notice">Add an Anthropic API key in Settings to turn on auto-detect. Hand-tagging works without one.</p>'}
+        ${canDetect ? '' : `<p class="notice">${esc(detectUnavailableReason())}</p>`}
         <div id="pending-list"></div>
       </div>
     </div>
@@ -252,7 +260,7 @@ async function runDetection() {
   setBusy('Claude is reading the photo…');
   $('#btn-detect').disabled = true;
   try {
-    const { items, photoNotes } = await detectGarments({ apiKey: getApiKey(), img });
+    const { items, photoNotes } = await detectGarments({ img, apiKey: getApiKey() });
     if (!items.length) {
       toast('No clothing found in that photo. Try a fuller shot, or tag by hand.', 'error');
       return;
@@ -802,7 +810,7 @@ function renderOutfits() {
     wireEmptyState(root);
     return;
   }
-  const hasKey = Boolean(getApiKey());
+  const canAsk = state.ai.ai;
 
   root.innerHTML = `
     <div class="panel">
@@ -818,9 +826,9 @@ function renderOutfits() {
       </div>
       <div class="brief-actions">
         <button class="btn primary" id="btn-build">Build outfits</button>
-        <button class="btn accent" id="btn-ai" ${hasKey ? '' : 'disabled'}>✨ Ask the AI stylist</button>
+        <button class="btn accent" id="btn-ai" ${canAsk ? '' : 'disabled'}>✨ Ask Claude to style me</button>
       </div>
-      ${hasKey ? '' : '<p class="notice">The AI stylist needs an API key (Settings). The built-in engine works without one.</p>'}
+      ${canAsk ? '' : '<p class="notice">Claude styling needs an API key (Settings). The closet engine below works without one.</p>'}
       ${state.stylistNote ? `<p class="stylist-note">${esc(state.stylistNote)}</p>` : ''}
     </div>
     <div id="suggestions">${state.suggestions.length ? state.suggestions.map(outfitCard).join('') : '<p class="hint">Pick an occasion and hit <strong>Build outfits</strong>.</p>'}</div>
@@ -1010,22 +1018,31 @@ function renderSettings() {
   const root = $('#view-settings');
   const stored = getApiKey();
   const remembered = Boolean(localStorage.getItem(KEY_STORAGE));
+  const hosted = isHosted();
 
   root.innerHTML = `
+    ${hosted ? `
+    <div class="panel">
+      <h2>Claude</h2>
+      <p class="hint">This page uses your own Claude account — there is nothing to set up and no API key to manage. Finding clothes in a photo and asking for outfits both count against your usual Claude usage; the first one asks your permission.</p>
+      <p class="status-line">${state.ai.ai ? '● Connected' : '○ Not available in this view'}${state.ai.ai && !state.ai.photos ? ' · photos unavailable here, hand-tagging still works' : ''}</p>
+    </div>` : `
     <div class="panel">
       <h2>Anthropic API key</h2>
-      <p class="hint">Needed for auto-detecting clothes from photos and for the AI stylist. Everything else works without it. Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
+      <p class="hint">Needed for finding clothes in photos and for Claude styling. Everything else works without it. Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
       <div class="key-row">
         <input type="password" id="api-key" placeholder="sk-ant-…" value="${esc(stored)}" autocomplete="off">
         <button class="btn primary" id="btn-save-key">Save</button>
       </div>
       <label class="switch"><input type="checkbox" id="remember-key" ${remembered ? 'checked' : ''}> Remember on this device</label>
       <p class="warning">⚠️ The key is used directly from your browser, so it is visible to anything running on this page. Fine for a personal app you run yourself — don't publish this page to the internet with a key in it.</p>
-    </div>
+    </div>`}
 
     <div class="panel">
       <h2>Your data</h2>
-      <p class="hint">Photos and items live in this browser's storage. Nothing is uploaded except the photo you explicitly send for detection.</p>
+      <p class="hint">${hosted
+        ? 'Your pieces are saved to this artifact, so they are here on any device you open it from. Photos stay in this browser. Nothing else is sent anywhere unless you press a ✨ button.'
+        : "Photos and items live in this browser's storage. Nothing is uploaded except the photo you explicitly send for detection."}</p>
       <div class="brief-actions">
         <button class="btn" id="btn-export">Export closet (JSON)</button>
         <label class="btn" for="import-input">Import closet</label>
@@ -1035,23 +1052,33 @@ function renderSettings() {
     </div>
   `;
 
-  $('#btn-save-key').addEventListener('click', () => {
+  $('#btn-save-key')?.addEventListener('click', () => {
     const key = $('#api-key').value.trim();
     const remember = $('#remember-key').checked;
     sessionStorage.removeItem(KEY_STORAGE);
     localStorage.removeItem(KEY_STORAGE);
     if (key) (remember ? localStorage : sessionStorage).setItem(KEY_STORAGE, key);
     toast(key ? 'Key saved.' : 'Key cleared.');
-    render();
+    aiStatus(getApiKey()).then((status) => { state.ai = status; render(); });
   });
 
   $('#btn-export').addEventListener('click', async () => {
-    const payload = await store.exportAll();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const payload = JSON.stringify(await store.exportAll(), null, 2);
+    const filename = `closet-${new Date().toISOString().slice(0, 10)}.json`;
+    const downloads = await getDownloads();
+    if (downloads) {
+      // A published page cannot start its own download; the viewer confirms this one.
+      try {
+        await downloads.save({ filename, data: payload });
+      } catch (err) {
+        if (err?.code !== 'declined') toast(err?.message || 'That download did not go through.', 'error');
+      }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `closet-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = filename;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });

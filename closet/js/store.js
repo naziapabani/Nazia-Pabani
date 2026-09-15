@@ -1,14 +1,61 @@
-// IndexedDB persistence. Photos are kept as blobs, items keep a small thumbnail
-// data URL so the closet grid renders without touching the original photos.
+// Persistence, with two backends chosen at run time.
+//
+// Items and saved looks go to the artifact's own document store when the page is
+// published (so the closet follows you between devices), and to IndexedDB when
+// it isn't. Photos always stay in IndexedDB: they are working material, they are
+// large, and once a piece is catalogued its thumbnail travels with the item.
+
+import { getDb } from './capabilities.js';
+
+const ITEMS_PATH = 'closet';
+const LOOKS_PATH = 'looks';
+
+let backendPromise = null;
+
+/** Resolves once: the shared store if this view has one, otherwise local only. */
+function backend() {
+  if (!backendPromise) {
+    backendPromise = getDb().then((db) => (db ? { kind: 'db', db } : { kind: 'idb' }));
+  }
+  return backendPromise;
+}
+
+export async function storeKind() {
+  return (await backend()).kind;
+}
+
+/** Document-store failures, in words a person can act on. */
+function describeDbError(err) {
+  switch (err?.code) {
+    case 'quota_exceeded':
+      return new Error('Your closet has hit its storage limit. Delete a few pieces to add more.');
+    case 'resource_exhausted':
+      return new Error('Too many changes at once — give it a second and try again.');
+    case 'revoked':
+      return new Error('This page lost access to your closet storage. Reload to reconnect.');
+    case 'invalid_argument':
+      return new Error('That item could not be saved — it may be too large.');
+    default:
+      return err instanceof Error ? err : new Error(err?.message || 'Could not save to your closet.');
+  }
+}
+
+/** Write to several documents without flooding the store. */
+async function writeAll(docs, write) {
+  const BATCH = 6;
+  for (let i = 0; i < docs.length; i += BATCH) {
+    await Promise.all(docs.slice(i, i + BATCH).map(write));
+  }
+}
 
 const DB_NAME = 'closet-db';
 const DB_VERSION = 1;
 
-let dbPromise = null;
+let localDbPromise = null;
 
 function openDb() {
-  if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
+  if (localDbPromise) return localDbPromise;
+  localDbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -30,7 +77,7 @@ function openDb() {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error || new Error('Could not open the closet database.'));
   });
-  return dbPromise;
+  return localDbPromise;
 }
 
 function tx(storeName, mode, run) {
@@ -81,35 +128,63 @@ export function deletePhoto(id) {
 /* ---------- items ---------- */
 
 export async function saveItem(item) {
-  await tx('items', 'readwrite', (store) => store.put(item));
+  const be = await backend();
+  try {
+    if (be.kind === 'db') await be.db.doc(`${ITEMS_PATH}/${item.id}`).set(item);
+    else await tx('items', 'readwrite', (store) => store.put(item));
+  } catch (err) {
+    throw describeDbError(err);
+  }
   return item;
 }
 
 export async function saveItems(items) {
-  await tx('items', 'readwrite', (store) => { items.forEach((item) => store.put(item)); });
+  const be = await backend();
+  try {
+    if (be.kind === 'db') await writeAll(items, (item) => be.db.doc(`${ITEMS_PATH}/${item.id}`).set(item));
+    else await tx('items', 'readwrite', (store) => { items.forEach((item) => store.put(item)); });
+  } catch (err) {
+    throw describeDbError(err);
+  }
   return items;
 }
 
-export function allItems() {
-  return tx('items', 'readonly', (store) => reqValue(store.getAll()));
+export async function allItems() {
+  const be = await backend();
+  if (be.kind !== 'db') return tx('items', 'readonly', (store) => reqValue(store.getAll()));
+  const snapshot = await be.db.collection(ITEMS_PATH).get();
+  return snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 }
 
-export function deleteItem(id) {
+export async function deleteItem(id) {
+  const be = await backend();
+  if (be.kind === 'db') return be.db.doc(`${ITEMS_PATH}/${id}`).delete();
   return tx('items', 'readwrite', (store) => store.delete(id));
 }
 
 /* ---------- outfits ---------- */
 
 export async function saveOutfit(outfit) {
-  await tx('outfits', 'readwrite', (store) => store.put(outfit));
+  const be = await backend();
+  try {
+    if (be.kind === 'db') await be.db.doc(`${LOOKS_PATH}/${outfit.id}`).set(outfit);
+    else await tx('outfits', 'readwrite', (store) => store.put(outfit));
+  } catch (err) {
+    throw describeDbError(err);
+  }
   return outfit;
 }
 
-export function allOutfits() {
-  return tx('outfits', 'readonly', (store) => reqValue(store.getAll()));
+export async function allOutfits() {
+  const be = await backend();
+  if (be.kind !== 'db') return tx('outfits', 'readonly', (store) => reqValue(store.getAll()));
+  const snapshot = await be.db.collection(LOOKS_PATH).get();
+  return snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 }
 
-export function deleteOutfit(id) {
+export async function deleteOutfit(id) {
+  const be = await backend();
+  if (be.kind === 'db') return be.db.doc(`${LOOKS_PATH}/${id}`).delete();
   return tx('outfits', 'readwrite', (store) => store.delete(id));
 }
 
@@ -157,11 +232,17 @@ export function makeItem(partial = {}) {
   };
 }
 
-/** Wipe everything — used by the "reset closet" button in Settings. */
+/** Wipe everything — used by the "delete everything" button in Settings. */
 export async function clearAll() {
-  const db = await openDb();
+  const be = await backend();
+  if (be.kind === 'db') {
+    const [items, looks] = await Promise.all([allItems(), allOutfits()]);
+    await writeAll(items, (item) => be.db.doc(`${ITEMS_PATH}/${item.id}`).delete());
+    await writeAll(looks, (look) => be.db.doc(`${LOOKS_PATH}/${look.id}`).delete());
+  }
+  const local = await openDb();
   await Promise.all(['photos', 'items', 'outfits'].map((name) => new Promise((resolve, reject) => {
-    const transaction = db.transaction(name, 'readwrite');
+    const transaction = local.transaction(name, 'readwrite');
     transaction.objectStore(name).clear();
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error);

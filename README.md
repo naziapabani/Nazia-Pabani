@@ -3,7 +3,8 @@
 A specialized food tracker designed for people with **Ulcerative Colitis** (UC), incorporating anti-inflammatory tracking and **Ayurvedic principles** for gut health.
 
 > **Also in this repo:** [🪞 **Closet**](closet/) — build a wardrobe from photos of yourself,
-> sort and search it, and get outfit recommendations. See [`closet/README.md`](closet/README.md).
+> sort and search it, and get outfit recommendations.
+> [**Open it**](https://claude.ai/artifact/4MVfhjhKQUKNDV3Hw4ujbn) · [`closet/README.md`](closet/README.md)
 
 ## Features
 
