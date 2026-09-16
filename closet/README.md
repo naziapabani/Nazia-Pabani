@@ -1,4 +1,4 @@
-# Closet
+# Niafied Closet
 
 Turn photos of yourself into a searchable wardrobe, then let it tell you what to wear.
 
@@ -9,12 +9,20 @@ filterable, and the raw material for outfit recommendations.
 
 ## Just use it
 
-**→ [Open Closet](https://claude.ai/artifact/4MVfhjhKQUKNDV3Hw4ujbn)**
+| | Link | Who it's for |
+|---|---|---|
+| **Your closet** | [claude.ai/artifact/4MVfhjhKQUKNDV3Hw4ujbn](https://claude.ai/artifact/4MVfhjhKQUKNDV3Hw4ujbn) | You. Saved to the page, so the same wardrobe is on your phone and your laptop. |
+| **Shareable copy** | [claude.ai/artifact/TuBrW2Vz9YewDZQvrFd2um](https://claude.ai/artifact/TuBrW2Vz9YewDZQvrFd2um) | Friends. Each person's wardrobe lives in their own browser — nobody sees anyone else's. |
 
-The published version needs nothing set up: no API key, no terminal, no install. It runs on
-your own Claude account (the first ✨ action asks your permission), and your pieces are
-saved to the page itself, so the closet is there on your phone and your laptop alike. Open
-it, drop in a photo, and go.
+Neither needs anything set up: no API key, no terminal, no install. Both run on the
+viewer's own Claude account (the first ✨ action asks permission). Open one, drop in a
+photo, and go.
+
+Why two: the storage that syncs your closet between devices is shared per artifact, so a
+single link would put everyone in the *same* closet — and an artifact that stores data that
+way can only be opened inside your own organization. The shareable copy drops that storage,
+which makes the link openable by anyone and gives each viewer their own private wardrobe.
+Same page either way; it detects what it has at load and adapts.
 
 Everything below is for running it yourself from this repo.
 
@@ -78,10 +86,14 @@ engine all work with no key at all.
 node build-artifact.mjs   # -> dist/closet-artifact.html
 ```
 
-This flattens `js/*.js` and `styles.css` into one self-contained page, since an artifact is
-a single document rather than a folder of modules. It resolves the module graph, fails
-loudly on a name collision, and escapes every non-ASCII character so the page renders the
-same however the host decodes it.
+This flattens `js/*.js`, `styles.css` and the brand mark into one self-contained page,
+since an artifact is a single document rather than a folder of modules. It resolves the
+module graph, fails loudly on a name collision, and escapes every non-ASCII character so
+the page renders the same however the host decodes it.
+
+It writes the same page twice — `closet-artifact.html` and `closet-shareable.html` — which
+publish as the two artifacts above. The only difference is the capabilities each is granted
+at publish time.
 
 ## One app, two homes
 
@@ -150,7 +162,18 @@ for filtering and for what the outfit engine reasons about.
 
 ## Design
 
-The chrome is deliberately quiet — cool paper greys, one spruce accent for actions, one
-amber signal for favourites and anything that spends Claude. The page is full of your
-clothes' colours, and those are the ones that should carry. Type is Archivo in two widths,
-with labels and meta set narrow and uppercase, the voice of a garment care label.
+Built from Niafied's own identity, taken off a studio invoice:
+
+- **Navy `#181f2d` and periwinkle `#83a4cd`**, sampled from the document itself
+- **Oswald** condensed for anything that announces itself — the masthead, section labels,
+  outfit titles, the big numbers in Insights — and **Poppins** for anything you read
+- **The giant word up the right edge**, the studio's signature device, here doing a job: it
+  reads `NIAFIED INTAKE`, `NIAFIED CLOSET`, `NIAFIED OUTFITS` and tells you which view
+  you're in, exactly the way the invoice says `NIAFIED INVOICE`
+- **The `N` mark**, lifted from the invoice and carried in the masthead
+- Labels sit over hairline rules, and scale jumps hard from a small label to a large
+  statement — both straight from the invoice's layout
+
+One visual world, deliberately: the navy is the brand, and a dark gallery wall is the right
+thing to hang clothes on. Every other colour on screen belongs to a garment, not to the
+interface.

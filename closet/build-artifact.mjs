@@ -105,8 +105,13 @@ async function build() {
 
   const css = await readFile(path.join(here, 'styles.css'), 'utf8');
   const shell = await readFile(path.join(here, 'index.html'), 'utf8');
+  // The brand mark ships inside the page: a published artifact has no folder to
+  // load it from, and the CSP would block an external host anyway.
+  const mark = await readFile(path.join(here, 'assets', 'niafied-mark.png'));
+  const markUri = `data:image/png;base64,${mark.toString('base64')}`;
   const body = shell.slice(shell.indexOf('<body>') + 6, shell.lastIndexOf('</body>'))
     .replace(/\n\s*<script type="module"[\s\S]*?<\/script>/, '')
+    .replaceAll('assets/niafied-mark.png', markUri)
     .trim();
 
   // The published page carries no charset declaration of its own, so anything
@@ -123,10 +128,10 @@ async function build() {
     (char) => `&#x${char.codePointAt(0).toString(16)};`);
 
   // An artifact page is content only — the platform supplies doctype, head and body.
-  const page = `<title>Closet</title>
+  const page = `<title>Niafied Closet</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap">
 <style>
 ${escapeMarkup(css.trim())}
 </style>
@@ -139,9 +144,17 @@ ${escapeJs(bundle)}
 `;
 
   await mkdir(path.join(here, 'dist'), { recursive: true });
-  const out = path.join(here, 'dist', 'closet-artifact.html');
-  await writeFile(out, page);
-  console.log(`wrote ${path.relative(here, out)} — ${(page.length / 1024).toFixed(0)} KB`);
+  // Two identical pages, published as two artifacts with different capabilities.
+  // The private one is granted `db`, so the closet follows its owner between
+  // devices; that grant also makes an artifact organization-internal. The
+  // shareable one is published without it, so the link opens for anyone and each
+  // viewer's closet lives in their own browser. The page needs no build-time
+  // switch: it asks for what it has at load and falls back on its own.
+  for (const name of ['closet-artifact.html', 'closet-shareable.html']) {
+    const out = path.join(here, 'dist', name);
+    await writeFile(out, page);
+    console.log(`wrote ${path.relative(here, out)} — ${(page.length / 1024).toFixed(0)} KB`);
+  }
 }
 
 build().catch((err) => { console.error(err.message); process.exit(1); });

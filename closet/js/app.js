@@ -95,8 +95,12 @@ function wireChrome() {
   }));
 }
 
+const VIEW_WORDS = { studio: 'Intake', closet: 'Closet', outfits: 'Outfits', insights: 'Insights', settings: 'Settings' };
+
 function render() {
   $$('.nav-tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === state.view));
+  const edge = $('#edge-word');
+  if (edge) edge.textContent = `Niafied ${VIEW_WORDS[state.view] ?? 'Closet'}`;
   $$('.view').forEach((view) => view.classList.toggle('active', view.id === `view-${state.view}`));
   const counts = { closet: state.items.length };
   $('#count-closet').textContent = counts.closet ? `${counts.closet}` : '';
@@ -118,7 +122,6 @@ function renderStudio() {
       <p class="hint">Mirror selfies, full-length shots someone took of you, or a flat lay of one piece. Claude reads the photo and lists what you're wearing; you confirm before anything lands in the closet.</p>
       <label class="dropzone" id="dropzone">
         <input type="file" id="file-input" accept="image/*" multiple hidden>
-        <span class="dropzone-icon">📸</span>
         <span class="dropzone-title">Drop photos here or click to choose</span>
         <span class="dropzone-sub">JPEG, PNG or HEIC-converted images. They stay on this device.</span>
       </label>
@@ -1113,7 +1116,6 @@ function renderSettings() {
 function emptyState(title, body, cta, view) {
   return `
     <div class="empty">
-      <span class="empty-icon">🪞</span>
       <h2>${esc(title)}</h2>
       <p>${esc(body)}</p>
       <button class="btn primary" data-goto="${view}">${esc(cta)}</button>
